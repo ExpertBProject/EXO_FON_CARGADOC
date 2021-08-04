@@ -62,11 +62,11 @@ Namespace My
      Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
      Global.System.Runtime.CompilerServices.CompilerGeneratedAttribute()>  _
     Friend Module MySettingsProperty
-        
-        <Global.System.ComponentModel.Design.HelpKeywordAttribute("My.Settings")>  _
-        Friend ReadOnly Property Settings() As Global.EXO_MWR_CARGADOC.My.MySettings
+
+        <Global.System.ComponentModel.Design.HelpKeywordAttribute("My.Settings")>
+        Friend ReadOnly Property Settings() As Global.EXO_FON_CARGADOC.My.MySettings
             Get
-                Return Global.EXO_MWR_CARGADOC.My.MySettings.Default
+                Return Global.EXO_FON_CARGADOC.My.MySettings.Default
             End Get
         End Property
     End Module

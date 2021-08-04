@@ -2,10 +2,10 @@
 Imports SAPbouiCOM
 
 Public Class EXO_FCCNF
-    Inherits EXO_Generales.EXO_DLLBase
+    Inherits EXO_UIAPI.EXO_DLLBase
 
-    Public Sub New(ByRef general As EXO_Generales.EXO_General, ByRef actualizar As Boolean)
-        MyBase.New(general, actualizar)
+    Public Sub New(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef actualizar As Boolean, usaLicencia As Boolean, idAddOn As Integer)
+        MyBase.New(oObjGlobal, actualizar, False, idAddOn)
         cargamenu()
         If actualizar Then
             cargaCampos()
@@ -16,39 +16,57 @@ Public Class EXO_FCCNF
     End Function
     Private Sub cargamenu()
         Dim Path As String = ""
-        Dim menuXML As String = objGlobal.Functions.leerEmbebido(Me.GetType(), "XML_MENU.xml")
-        SboApp.LoadBatchActions(menuXML)
-        Dim res As String = SboApp.GetLastBatchResults
-
-        If SboApp.Menus.Exists("EXO-MnCDoc") = True Then
-            Path = objGlobal.conexionSAP.path & "\02.Menus"
+        Dim menuXML As String = objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_MENU.xml")
+        objGlobal.SBOApp.LoadBatchActions(menuXML)
+        Dim res As String = objGlobal.SBOApp.GetLastBatchResults
+        Path = objGlobal.refDi.OGEN.pathGeneral.ToString.Trim
+        If objGlobal.SBOApp.Menus.Exists("EXO-MnCDoc") = True Then
+            Path &= "\02.Menus"
             If Path <> "" Then
                 If IO.File.Exists(Path & "\MnCDOC.png") = True Then
-                    SboApp.Menus.Item("EXO-MnCDoc").Image = Path & "\MnCDOC.png"
+                    objGlobal.SBOApp.Menus.Item("EXO-MnCDoc").Image = Path & "\MnCDOC.png"
                 End If
             End If
         End If
     End Sub
     Public Overrides Function filtros() As EventFilters
         Dim filtrosXML As Xml.XmlDocument = New Xml.XmlDocument
-        filtrosXML.LoadXml(objGlobal.Functions.leerEmbebido(Me.GetType(), "XML_FILTROS.xml"))
+        filtrosXML.LoadXml(objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_FILTROS.xml"))
         Dim filtro As SAPbouiCOM.EventFilters = New SAPbouiCOM.EventFilters()
         filtro.LoadFromXML(filtrosXML.OuterXml)
 
         Return filtro
     End Function
     Private Sub cargaCampos()
-        If objGlobal.conexionSAP.esAdministrador Then
+        If objGlobal.refDi.comunes.esAdministrador Then
             Dim oXML As String = ""
             Dim udoObj As EXO_Generales.EXO_UDO = Nothing
             'MnCFRP
-            oXML = objGlobal.Functions.leerEmbebido(Me.GetType(), "UDO_EXO_FCCNF.xml")
-            objGlobal.conexionSAP.LoadBDFromXML(oXML)
-            objGlobal.conexionSAP.SBOApp.StatusBar.SetText("Validado: UDO_EXO_FCCNF", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_FCCNF.xml")
+            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UDO_EXO_FCCNF", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+            'Cargamos campos personalizados en las lineas de facturas
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDFs_INV1.xml")
+            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UDFs_INV1", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+            'Cargamos campos temporales
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UT_EXO_TMPDOC.xml")
+            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UT_EXO_TMPDOC", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UT_EXO_TMPDOCL.xml")
+            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UT_EXO_TMPDOCL", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UT_EXO_TMPDOCLT.xml")
+            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UT_EXO_TMPDOCLT", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
         End If
     End Sub
 
-    Public Overrides Function SBOApp_MenuEvent(ByRef infoEvento As EXO_Generales.EXO_MenuEvent) As Boolean
+    Public Overrides Function SBOApp_MenuEvent(infoEvento As MenuEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
 
         Try
@@ -57,23 +75,23 @@ Public Class EXO_FCCNF
                 Select Case infoEvento.MenuUID
                     Case "EXO-MnCFCF"
                         'Cargamos UDO Configurador.
-                        objGlobal.conexionSAP.cargaFormUdoBD("EXO_FCCNF")
+                        objGlobal.funcionesUI.cargaFormUdoBD("EXO_FCCNF")
                 End Select
             End If
 
             Return MyBase.SBOApp_MenuEvent(infoEvento)
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
-    Public Overrides Function SBOApp_ItemEvent(ByRef infoEvento As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Public Overrides Function SBOApp_ItemEvent(infoEvento As ItemEvent) As Boolean
         Try
             If infoEvento.InnerEvent = False Then
                 If infoEvento.BeforeAction = False Then
@@ -122,7 +140,7 @@ Public Class EXO_FCCNF
                         Case "UDO_FT_EXO_FCCNF"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_VISIBLE
-                                    If EventHandler_FORM_VISIBLE(infoEvento) = False Then
+                                    If EventHandler_FORM_VISIBLE(objGlobal, infoEvento) = False Then
                                         GC.Collect()
                                         Return False
                                     End If
@@ -143,7 +161,7 @@ Public Class EXO_FCCNF
                         Case "UDO_FT_EXO_FCCNF"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_CHOOSE_FROM_LIST
-                                    If EventHandler_Choose_FromList_Before(infoEvento) = False Then
+                                    If EventHandler_Choose_FromList_Before(objGlobal, infoEvento) = False Then
                                         GC.Collect()
                                         Return False
                                     End If
@@ -156,46 +174,50 @@ Public Class EXO_FCCNF
 
             Return MyBase.SBOApp_ItemEvent(infoEvento)
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         End Try
     End Function
-    Private Function EventHandler_Choose_FromList_Before(ByRef pVal As EXO_Generales.EXO_infoItemEvent) As Boolean
-        Dim oCFLEvento As EXO_Generales.EXO_infoItemEvent = Nothing
+    Private Function EventHandler_Choose_FromList_Before(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
 
         Dim oConds As SAPbouiCOM.Conditions = Nothing
         Dim oCond As SAPbouiCOM.Condition = Nothing
         Dim iEntra As Integer = 0
         EventHandler_Choose_FromList_Before = False
+        Dim sChoosefromlist As String = ""
 
         Try
-            oForm = objGlobal.conexionSAP.SBOApp.Forms.Item(pVal.FormUID)
-
-            oCFLEvento = CType(pVal, EXO_Generales.EXO_infoItemEvent)
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             oConds = New SAPbouiCOM.Conditions
-            Select Case pVal.ItemUID
-                Case "txtCSRV" 'CCC de SRV por defecto
-                    oCond = oConds.Add
-                    oCond.Alias = "ActType" ' Propiedad Cliente principal
-                    oCond.Operation = SAPbouiCOM.BoConditionOperation.co_NOT_EQUAL
-                    oCond.CondVal = "N"
-                Case "txtIV" 'Impuesto de ventas por defecto
-                    oCond = oConds.Add
-                    oCond.Alias = "Category" ' Categoría del impuesto
-                    oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
-                    oCond.CondVal = "O"
-                Case "txtIC" 'Impuesto de compras por defecto
-                    oCond = oConds.Add
-                    oCond.Alias = "Category" ' Categoría del impuesto
-                    oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
-                    oCond.CondVal = "I"
-            End Select
 
-            oForm.ChooseFromLists.Item(oCFLEvento.ChooseFromListUID).SetConditions(oConds)
+            If pVal.ItemUID <> "15_U_E" And pVal.ItemUID <> "txt_IC" Then
+                Select Case pVal.ItemUID
+                    Case "txtCSRV" 'CCC de SRV por defecto
+                        oCond = oConds.Add
+                        oCond.Alias = "ActType" ' Propiedad Cliente principal
+                        oCond.Operation = SAPbouiCOM.BoConditionOperation.co_NOT_EQUAL
+                        oCond.CondVal = "N"
+                        sChoosefromlist = "CFL_CSRV"
+                    Case "txtIV" 'Impuesto de ventas por defecto
+                        oCond = oConds.Add
+                        oCond.Alias = "Category" ' Categoría del impuesto
+                        oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
+                        oCond.CondVal = "O"
+                        sChoosefromlist = "CFL_IV"
+                    Case "txtIC" 'Impuesto de compras por defecto
+                        oCond = oConds.Add
+                        oCond.Alias = "Category" ' Categoría del impuesto
+                        oCond.Operation = SAPbouiCOM.BoConditionOperation.co_EQUAL
+                        oCond.CondVal = "I"
+                        sChoosefromlist = "CFL_IC"
+                End Select
+                oForm.ChooseFromLists.Item(sChoosefromlist).SetConditions(oConds)
+            End If
+
             EventHandler_Choose_FromList_Before = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
@@ -203,20 +225,19 @@ Public Class EXO_FCCNF
         Catch ex As Exception
             Throw ex
         Finally
-            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oCFLEvento, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oConds, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oCond, Object))
         End Try
     End Function
-    Private Function EventHandler_FORM_VISIBLE(ByRef pVal As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Private Function EventHandler_FORM_VISIBLE(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sSQL As String = ""
         EventHandler_FORM_VISIBLE = False
 
         Try
-            oForm = SboApp.Forms.Item(pVal.FormUID)
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
 
             If oForm.Visible = True Then
                 sSQL = "SELECT * FROM ""@EXO_CFCNF"" "
@@ -224,7 +245,7 @@ Public Class EXO_FCCNF
                 If oRs.RecordCount > 0 Then
                     oForm.Mode = BoFormMode.fm_OK_MODE
                     If oForm.Mode <> SAPbouiCOM.BoFormMode.fm_ADD_MODE Then
-                        objGlobal.conexionSAP.SBOApp.ActivateMenuItem("1290") ' Ir al primer registro
+                        objGlobal.SBOApp.ActivateMenuItem("1290") ' Ir al primer registro
                     ElseIf oForm.Mode = SAPbouiCOM.BoFormMode.fm_ADD_MODE Then
                         CargaComboLínea(oForm, 1, CType(oForm.Items.Item("15_U_E").Specific, SAPbouiCOM.EditText).Value.ToString)
                         CType(oForm.Items.Item("O_U_E").Specific, SAPbouiCOM.EditText).Active = True
@@ -241,20 +262,20 @@ Public Class EXO_FCCNF
             EventHandler_FORM_VISIBLE = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
         End Try
     End Function
-    Private Function HabDesHabCampos(ByRef pVal As EXO_Generales.EXO_infoItemEvent, ByVal sValorCampo As String) As Boolean
+    Private Function HabDesHabCampos(ByRef pVal As ItemEvent, ByVal sValorCampo As String) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         HabDesHabCampos = False
 
         Try
-            oForm = SboApp.Forms.Item(pVal.FormUID)
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
 
             If oForm.Visible = True And oForm.TypeEx = "UDO_FT_EXO_FCCNF" Then
                 Select Case sValorCampo
@@ -276,19 +297,19 @@ Public Class EXO_FCCNF
             HabDesHabCampos = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
-    Private Function EventHandler_COMBO_SELECT(ByRef pVal As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Private Function EventHandler_COMBO_SELECT(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         EventHandler_COMBO_SELECT = False
 
         Try
-            oForm = SboApp.Forms.Item(pVal.FormUID)
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             If oForm.Mode = BoFormMode.fm_ADD_MODE Or oForm.Mode = BoFormMode.fm_UPDATE_MODE Then
                 If pVal.ItemChanged = True And pVal.ItemUID = "14_U_Cb" Then ' Tipo Fichero a importar
                     HabDesHabCampos(pVal, CType(oForm.Items.Item("14_U_Cb").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString)
@@ -301,8 +322,8 @@ Public Class EXO_FCCNF
                             CargaComboLínea(oForm, pVal.Row, CType(oForm.Items.Item("15_U_E").Specific, SAPbouiCOM.EditText).Value.ToString)
                         End If
                     Else
-                        SboApp.MessageBox("No ha seleccionado la estructura de ficheros." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione Cód. de los Parámetros de Campos de SAP.")
-                        SboApp.StatusBar.SetText("(EXO) - No ha seleccionado la estructura de ficheros." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione Cód. de los Parámetros de Campos de SAP.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                        objGlobal.SBOApp.MessageBox("No ha seleccionado la estructura de ficheros." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione Cód. de los Parámetros de Campos de SAP.")
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - No ha seleccionado la estructura de ficheros." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione Cód. de los Parámetros de Campos de SAP.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                         CType(oForm.Items.Item("15_U_E").Specific, SAPbouiCOM.EditText).Active = True
                     End If
                 End If
@@ -311,34 +332,34 @@ Public Class EXO_FCCNF
             EventHandler_COMBO_SELECT = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
-    Private Function EventHandler_LOST_FOCUS(ByRef pVal As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Private Function EventHandler_LOST_FOCUS(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         EventHandler_LOST_FOCUS = False
 
         Try
-            oForm = SboApp.Forms.Item(pVal.FormUID)
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             If pVal.ItemUID = "15_U_E" Then 'Cod. Campo según Tipo Cabecera
                 If CType(oForm.Items.Item("15_U_E").Specific, SAPbouiCOM.EditText).Value.ToString <> "" Then
                     CargaComboLínea(oForm, 1, CType(oForm.Items.Item("15_U_E").Specific, SAPbouiCOM.EditText).Value.ToString)
                 Else
-                    SboApp.MessageBox("No ha seleccionado la estructura de ficheros." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione Cód. de los Parámetros de Campos de SAP.")
-                    SboApp.StatusBar.SetText("(EXO) - No ha seleccionado la estructura de ficheros." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione Cód. de los Parámetros de Campos de SAP.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    objGlobal.SBOApp.MessageBox("No ha seleccionado la estructura de ficheros." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione Cód. de los Parámetros de Campos de SAP.")
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - No ha seleccionado la estructura de ficheros." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione Cód. de los Parámetros de Campos de SAP.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                     CType(oForm.Items.Item("15_U_E").Specific, SAPbouiCOM.EditText).Active = True
                 End If
             End If
             EventHandler_LOST_FOCUS = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
@@ -347,7 +368,7 @@ Public Class EXO_FCCNF
 
         CargaComboLínea = False
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sTipo As String = ""
         Dim sTabla As String = ""
         Try
@@ -357,16 +378,16 @@ Public Class EXO_FCCNF
                 Case "C" : sTabla = "@EXO_CSAPC"
                 Case "L" : sTabla = "@EXO_CSAPL"
                 Case Else
-                    SboApp.MessageBox("Ha ocurrido un error inesperado en el campo ""Tipo Campo"".")
-                    SboApp.StatusBar.SetText("(EXO) - Ha ocurrido un error inesperado en el campo ""Tipo Campo"".", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    objGlobal.SBOApp.MessageBox("Ha ocurrido un error inesperado en el campo ""Tipo Campo"".")
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Ha ocurrido un error inesperado en el campo ""Tipo Campo"".", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                     Exit Function
             End Select
             sSQL = "Select ""U_EXO_COD"",""U_EXO_DES"" FROM """ & sTabla & """ where ""Code""='" & sCode & "' Order by ""LineId"" "
             oRs.DoQuery(sSQL)
             If oRs.RecordCount > 0 Then
-                objGlobal.conexionSAP.refSBOApp.cargaCombo(CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(iLinea).Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                objGlobal.funcionesUI.cargaCombo(CType(CType(oForm.Items.Item("0_U_G").Specific, SAPbouiCOM.Matrix).Columns.Item("C_0_2").Cells.Item(iLinea).Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
 
             CargaComboLínea = True
@@ -382,23 +403,23 @@ Public Class EXO_FCCNF
 
         CargaComboSerie = False
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sTipo As String = ""
         Try
             sSQL = "Select ""Series"",""SeriesName"" FROM ""NNM1"" WHERE ""ObjectCode""=2 and ""DocSubType""='C' "
             oRs.DoQuery(sSQL)
             If oRs.RecordCount > 0 Then
-                objGlobal.conexionSAP.refSBOApp.cargaCombo(CType(oForm.Items.Item("cbSCLI").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cbSCLI").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
 
             sSQL = "Select ""Series"",""SeriesName"" FROM ""NNM1"" WHERE ""ObjectCode""=2 and ""DocSubType""='S' "
             oRs.DoQuery(sSQL)
             If oRs.RecordCount > 0 Then
-                objGlobal.conexionSAP.refSBOApp.cargaCombo(CType(oForm.Items.Item("cbSPRO").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cbSPRO").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
 
             CargaComboSerie = True
@@ -413,23 +434,23 @@ Public Class EXO_FCCNF
 
         CargaComboViaPago = False
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sTipo As String = ""
         Try
             sSQL = "Select ""PayMethCod"",""Descript"" FROM ""OPYM"" WHERE ""Type""='I' "
             oRs.DoQuery(sSQL)
             If oRs.RecordCount > 0 Then
-                objGlobal.conexionSAP.refSBOApp.cargaCombo(CType(oForm.Items.Item("cb_VIAPV").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cb_VIAPV").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
 
             sSQL = "Select ""PayMethCod"",""Descript"" FROM ""OPYM"" WHERE ""Type""='O' "
             oRs.DoQuery(sSQL)
             If oRs.RecordCount > 0 Then
-                objGlobal.conexionSAP.refSBOApp.cargaCombo(CType(oForm.Items.Item("cb_VPC").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cb_VPC").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
 
             CargaComboViaPago = True
@@ -444,23 +465,23 @@ Public Class EXO_FCCNF
 
         CargaComboCPago = False
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sTipo As String = ""
         Try
             sSQL = "Select ""GroupNum"",""PymntGroup"" FROM ""OCTG""  "
             oRs.DoQuery(sSQL)
             If oRs.RecordCount > 0 Then
-                objGlobal.conexionSAP.refSBOApp.cargaCombo(CType(oForm.Items.Item("cb_CPV").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cb_CPV").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
 
             sSQL = "Select ""GroupNum"",""PymntGroup"" FROM ""OCTG""  "
             oRs.DoQuery(sSQL)
             If oRs.RecordCount > 0 Then
-                objGlobal.conexionSAP.refSBOApp.cargaCombo(CType(oForm.Items.Item("cb_CPC").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cb_CPC").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
 
             CargaComboCPago = True

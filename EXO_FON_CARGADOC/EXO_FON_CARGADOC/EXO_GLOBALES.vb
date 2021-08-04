@@ -5,7 +5,7 @@ Imports OfficeOpenXml
 
 Public Class EXO_GLOBALES
 #Region "Funciones formateos datos"
-    Public Shared Function TextToDbl(ByRef oObjGlobal As EXO_Generales.EXO_General, ByVal sValor As String) As Double
+    Public Shared Function TextToDbl(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByVal sValor As String) As Double
         Dim cValor As Double = 0
         Dim sValorAux As String = "0"
 
@@ -14,11 +14,11 @@ Public Class EXO_GLOBALES
         Try
             sValorAux = sValor
 
-            If oObjGlobal.conexionSAP.SBOApp.ClientType = BoClientType.ct_Desktop Then
+            If oObjGlobal.SBOApp.ClientType = BoClientType.ct_Desktop Then
                 If sValorAux <> "" Then
                     If Left(sValorAux, 1) = "." Then sValorAux = "0" & sValorAux
 
-                    If oObjGlobal.conexionSAP.OADM.separadorMillarB1 = "." AndAlso oObjGlobal.conexionSAP.OADM.separadorDecimalB1 = "," Then 'Decimales ES
+                    If oObjGlobal.refDi.OADM.separadorMillarB1 = "." AndAlso oObjGlobal.refDi.OADM.separadorDecimalB1 = "," Then 'Decimales ES
                         If sValorAux.IndexOf(".") > 0 AndAlso sValorAux.IndexOf(",") > 0 Then
                             cValor = CDbl(sValorAux.Replace(".", ""))
                         ElseIf sValorAux.IndexOf(".") > 0 Then
@@ -40,7 +40,7 @@ Public Class EXO_GLOBALES
                 If sValorAux <> "" Then
                     If Left(sValorAux, 1) = "," Then sValorAux = "0" & sValorAux
 
-                    If oObjGlobal.conexionSAP.OADM.separadorMillarB1 = "." AndAlso oObjGlobal.conexionSAP.OADM.separadorDecimalB1 = "," Then 'Decimales ES
+                    If oObjGlobal.refDi.OADM.separadorMillarB1 = "." AndAlso oObjGlobal.refDi.OADM.separadorDecimalB1 = "," Then 'Decimales ES
                         If sValorAux.IndexOf(",") > 0 AndAlso sValorAux.IndexOf(".") > 0 Then
                             cValor = CDbl(sValorAux.Replace(",", ""))
                         ElseIf sValorAux.IndexOf(",") > 0 Then
@@ -68,14 +68,14 @@ Public Class EXO_GLOBALES
             Throw ex
         End Try
     End Function
-    Public Shared Function DblNumberToText(ByRef oObjGlobal As EXO_Generales.EXO_General, ByVal sValor As String) As String
+    Public Shared Function DblNumberToText(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByVal sValor As String) As String
         Dim sNumberDouble As String = "0"
 
         DblNumberToText = "0"
 
         Try
             If sValor <> "" Then
-                If oObjGlobal.conexionSAP.OADM.separadorMillarB1 = "." AndAlso oObjGlobal.conexionSAP.OADM.separadorDecimalB1 = "," Then 'Decimales ES
+                If oObjGlobal.refDi.OADM.separadorMillarB1 = "." AndAlso oObjGlobal.refDi.OADM.separadorDecimalB1 = "," Then 'Decimales ES
                     sNumberDouble = sValor
                 Else 'Decimales USA
                     sNumberDouble = sValor.Replace(",", ".")
@@ -306,17 +306,17 @@ Public Class EXO_GLOBALES
     '                EXO_GLOBALES.Actualizar_ImpE(oObjGlobal, oCompany, sModelo, SCodLiq, "3", "", CInt(oCompany.GetNewObjectKey()))
 
     '                'grabar
-    '                oObjGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Se ha generado el pago " & sPago & " con el concepto " & sConcepto, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+    '                oobjGlobal.SBOApp.StatusBar.SetText("(EXO) - Se ha generado el pago " & sPago & " con el concepto " & sConcepto, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
     '                GenerarPagoCTA = True
     '            Else
     '                sError = oCompany.GetLastErrorDescription
-    '                oObjGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - No puede generar el pago. " & oCompany.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+    '                oobjGlobal.SBOApp.StatusBar.SetText("(EXO) - No puede generar el pago. " & oCompany.GetLastErrorDescription, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
     '                GenerarPagoCTA = False
     '            End If
     '        End If
     '    Catch ex As Exception
     '        sError = ex.Message
-    '        oObjGlobal.conexionSAP.SBOApp.StatusBar.SetText(sError, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+    '        oobjGlobal.SBOApp.StatusBar.SetText(sError, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
     '        Throw ex
     '    Finally
     '        EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
@@ -470,14 +470,14 @@ Public Class EXO_GLOBALES
     End Function
 #End Region
 #Region "Comprobar CIF-NIF"
-    Public Shared Function Comprobar_CIF_NIF(ByRef oObjGlobal As EXO_Generales.EXO_General, ByVal sValor As String) As Boolean
+    Public Shared Function Comprobar_CIF_NIF(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByVal sValor As String) As Boolean
         Comprobar_CIF_NIF = False
         Dim oRs As SAPbobsCOM.Recordset = Nothing
         Dim sSQL As String = ""
         Try
-            oRs = CType(oObjGlobal.conexionSAP.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+            oRs = CType(oObjGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
             'Validamos el CIF o NIF
-            If oObjGlobal.conexionSAP.compañia.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB Then
+            If oObjGlobal.compañia.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB Then
                 sSQL = "SELECT ""EXO_VALIDAR_NIF_CIF""(RTRIM(LTRIM('" & sValor & "'))) ""Es_CIFNIF_OK"" FROM DUMMY;"
             Else
                 sSQL = "SELECT [dbo].[EXO_VALIDAR_NIF_CIF](RTRIM(LTRIM('" & sValor & "'))) ""Es_CIFNIF_OK"" "
@@ -486,8 +486,8 @@ Public Class EXO_GLOBALES
 
             If oRs.RecordCount > 0 Then
                 If CInt(oRs.Fields.Item("Es_CIFNIF_OK").Value.ToString) = 0 Then
-                    oObjGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - El CIF/NIF " & sValor & " no es válido.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                    oObjGlobal.conexionSAP.SBOApp.MessageBox("El CIF/NIF " & sValor & " no es válido.")
+                    oObjGlobal.SBOApp.StatusBar.SetText("(EXO) - El CIF/NIF " & sValor & " no es válido.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    oObjGlobal.SBOApp.MessageBox("El CIF/NIF " & sValor & " no es válido.")
                     Exit Function
                 End If
             Else
@@ -506,7 +506,7 @@ Public Class EXO_GLOBALES
 #End Region
 
 #Region "Creación de datos"
-    Public Shared Function CrearDocumentos(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByVal sTDoc As String, ByRef oCompany As SAPbobsCOM.Company, ByRef oSboApp As Application, ByRef objglobal As EXO_Generales.EXO_General) As Boolean
+    Public Shared Function CrearDocumentos(ByRef oForm As SAPbouiCOM.Form, ByVal sData As String, ByVal sTDoc As String, ByRef oCompany As SAPbobsCOM.Company, ByRef oSboApp As Application, ByRef objglobal As EXO_UIAPI.EXO_UIAPI) As Boolean
         CrearDocumentos = False
         Dim oDoc As SAPbobsCOM.Documents = Nothing
         Dim sExiste As String = "" ' Para comprobar si existen los datos
@@ -531,7 +531,7 @@ Public Class EXO_GLOBALES
             'Company.StartTransaction()
             For i = 0 To oForm.DataSources.DataTables.Item(sData).Rows.Count - 1
                 If oForm.DataSources.DataTables.Item(sData).GetValue("Sel", i).ToString = "Y" Then 'Sólo los registros que se han seleccionado
-                    sSQL = "Select * FROM ""@EXO_TMPDOC"" Where ""Code""=" & oForm.DataSources.DataTables.Item(sData).GetValue("Code", i).ToString & " and ""U_EXO_USR""='" & objglobal.usuario & "' "
+                    sSQL = "Select * FROM ""@EXO_TMPDOC"" Where ""Code""=" & oForm.DataSources.DataTables.Item(sData).GetValue("Code", i).ToString & " and ""U_EXO_USR""='" & objglobal.compañia.UserName & "' "
                     oRsCab.DoQuery(sSQL)
                     If oRsCab.RecordCount > 0 Then
 #Region "Cabecera"
@@ -600,7 +600,7 @@ Public Class EXO_GLOBALES
                                 Dim sSerieDoc As String = oRsSerie.Fields.Item("Series").Value.ToString
                                 oDoc.Series = sSerieDoc
                             Else
-                                objglobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - No se ha encontrado serie para el documento.", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                                objglobal.SBOApp.StatusBar.SetText("(EXO) - No se ha encontrado serie para el documento.", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                 Exit Function
                             End If
                         End If
@@ -614,7 +614,7 @@ Public Class EXO_GLOBALES
                         'Hay que buscar el comercial para asignarlo
                         If oForm.DataSources.DataTables.Item(sData).GetValue("Comercial", i).ToString <> "" Then
                             Dim sCodComercial = ""
-                            sCodComercial = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OSLP""", """SlpCode""", """SlpName""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Comercial", i).ToString & "'")
+                            sCodComercial = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OSLP""", """SlpCode""", """SlpName""='" & oForm.DataSources.DataTables.Item(sData).GetValue("Comercial", i).ToString & "'")
                             If sCodComercial <> "" Then
                                 oDoc.SalesPersonCode = sCodComercial
                             Else
@@ -648,8 +648,8 @@ Public Class EXO_GLOBALES
                             'oDoc.DocDueDate = Year(oForm.DataSources.DataTables.Item(sData).GetValue("F. Contable", i).ToString) & "-" & Month(oForm.DataSources.DataTables.Item(sData).GetValue("F. Contable", i).ToString) & "-" & Day(oForm.DataSources.DataTables.Item(sData).GetValue("F. Contable", i).ToString)
                         End If
 #End Region
-                        If oRsCab.Fields.Item("U_EXO_DIRFAC").Value.ToString <> "" Then : oDoc.PayToCode = oRsCab.Fields.Item("U_EXO_DIRFAC").Value.ToString : End If
-                        If oRsCab.Fields.Item("U_EXO_DIRENT").Value.ToString <> "" Then : oDoc.ShipToCode = oRsCab.Fields.Item("U_EXO_DIRENT").Value.ToString : End If
+                        If oRsCab.Fields.Item("U_EXO_DIRFAC").Value.ToString <> "Facturación" Then : oDoc.PayToCode = oRsCab.Fields.Item("U_EXO_DIRFAC").Value.ToString : End If
+                        If oRsCab.Fields.Item("U_EXO_DIRENT").Value.ToString <> "Entrega" Then : oDoc.ShipToCode = oRsCab.Fields.Item("U_EXO_DIRENT").Value.ToString : End If
 #Region "condición y modo de pago"
                         If oRsCab.Fields.Item("U_EXO_CPAGO").Value.ToString <> "" Then
                             oDoc.PaymentMethod = oRsCab.Fields.Item("U_EXO_CPAGO").Value.ToString
@@ -657,7 +657,7 @@ Public Class EXO_GLOBALES
                         If oRsCab.Fields.Item("U_EXO_GROUPNUM").Value.ToString <> "" Then
                             Dim sGroupNum As Integer = -1
                             Try
-                                sGroupNum = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OCTG""", """GroupNum""", """PymntGroup""='" & oRsCab.Fields.Item("U_EXO_GROUPNUM").Value.ToString & "'")
+                                sGroupNum = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OCTG""", """GroupNum""", """PymntGroup""='" & oRsCab.Fields.Item("U_EXO_GROUPNUM").Value.ToString & "'")
                             Catch ex As Exception
                                 sGroupNum = -1
                             End Try
@@ -675,7 +675,7 @@ Public Class EXO_GLOBALES
 
 #Region "Líneas"
                         'Buscamos las líneas del documento
-                        sSQL = "Select * FROM ""@EXO_TMPDOCL"" Where ""Code""=" & oRsCab.Fields.Item("Code").Value.ToString & " and ""U_EXO_USR""='" & objglobal.usuario & "' "
+                        sSQL = "Select * FROM ""@EXO_TMPDOCL"" Where ""Code""=" & oRsCab.Fields.Item("Code").Value.ToString & " and ""U_EXO_USR""='" & objglobal.compañia.UserName & "' "
                         oRsLin.DoQuery(sSQL)
                         For iLin = 1 To oRsLin.RecordCount
                             If esprimeralinea = False Then
@@ -693,8 +693,6 @@ Public Class EXO_GLOBALES
                             Dim sReparto As String = oRsLin.Fields.Item("U_EXO_REPARTO").Value.ToString
                             If sReparto <> "" Then
                                 oDoc.Lines.CostingCode = sReparto
-                            Else
-                                oDoc.Lines.CostingCode = "12040201"
                             End If
 
 #End Region
@@ -704,17 +702,29 @@ Public Class EXO_GLOBALES
                                     oDoc.Lines.ItemDescription = oRsLin.Fields.Item("U_EXO_ARTDES").Value
                                 End If
                                 oDoc.Lines.Quantity = oRsLin.Fields.Item("U_EXO_CANT").Value
-                                oDoc.Lines.UnitPrice = oRsLin.Fields.Item("U_EXO_PRECIO").Value
-                                oDoc.Lines.GrossBuyPrice = oRsLin.Fields.Item("U_EXO_PRECIOBRUTO").Value
+                                ' el precio es ya con IVA, por lo que tenemos que quitarselo
+                                Dim dPrecio As Double = oRsLin.Fields.Item("U_EXO_PRECIO").Value
+                                Dim sImpuesto As String = oRsLin.Fields.Item("U_EXO_Impuesto").Value
+                                Dim dImpuesto As Double = 0
+                                If sImpuesto = "" Then
+                                    'Buscamos el impuesto del Artículo
+                                    sImpuesto = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OITM""", """VatGourpSA""", """ItemCode""='" & oRsCab.Fields.Item("U_EXO_ART").Value.ToString & "'")
+                                End If
+                                dImpuesto = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OVTG""", """Rate""", """Code""='" & sImpuesto & "'")
+                                dPrecio = (dPrecio / (1 + (dImpuesto / 100)))
+                                oDoc.Lines.UnitPrice = dPrecio
+                                If oRsLin.Fields.Item("U_EXO_PRECIOBRUTO").Value > 0 Then
+                                    oDoc.Lines.GrossBuyPrice = oRsLin.Fields.Item("U_EXO_PRECIOBRUTO").Value
+                                End If
                                 oDoc.Lines.DiscountPercent = oRsLin.Fields.Item("U_EXO_DTOLIN").Value
-                                dImpTotal += (oRsLin.Fields.Item("U_EXO_CANT").Value * oRsLin.Fields.Item("U_EXO_PRECIO").Value) - ((oRsLin.Fields.Item("U_EXO_DTOLIN").Value * (oRsLin.Fields.Item("U_EXO_CANT").Value * oRsLin.Fields.Item("U_EXO_PRECIO").Value)) / 100)
+                                dImpTotal += (oRsLin.Fields.Item("U_EXO_CANT").Value * oDoc.Lines.UnitPrice) - ((oRsLin.Fields.Item("U_EXO_DTOLIN").Value * (oRsLin.Fields.Item("U_EXO_CANT").Value * oDoc.Lines.UnitPrice)) / 100)
                                 'Buscamos series disponibles
                                 sSQL = "select t0.""SysNumber"" ""SysNumber"" "
                                 sSQL &= " FROM ""OSRN"" t0 INNER JOIN ""OSRQ"" t1 on t0.""ItemCode""=t1.""ItemCode"" and t0.""SysNumber""=t1.""SysNumber"" "
                                 sSQL &= " WHERE t0.""ItemCode""='" & oRsLin.Fields.Item("U_EXO_ART").Value.ToString & "' and t1.""Quantity"">0 ORDER BY ""SysNumber"""
                                 oRsSerieNumber.DoQuery(sSQL)
                                 'Incluimos los Lotes
-                                sSQL = "Select * FROM ""@EXO_TMPDOCLT"" Where ""Code""=" & oRsLin.Fields.Item("Code").Value.ToString & " And ""U_EXO_USR""='" & objglobal.usuario & "' "
+                                sSQL = "Select * FROM ""@EXO_TMPDOCLT"" Where ""Code""=" & oRsLin.Fields.Item("Code").Value.ToString & " And ""U_EXO_USR""='" & objglobal.compañia.UserName & "' "
                                 sSQL &= " and ""U_EXO_LineId""=" & oRsLin.Fields.Item("LineId").Value.ToString
                                 oRsLote.DoQuery(sSQL)
                                 For iLote = 1 To oRsLote.RecordCount
@@ -777,6 +787,12 @@ Public Class EXO_GLOBALES
                                     oDoc.WithholdingTaxData.Add()
                                 End If
                             End If
+#End Region
+#Region "Campos de usuario"
+                            oDoc.Lines.UserFields.Fields.Item("U_EXO_TransSantander").Value = oRsLin.Fields.Item("U_EXO_TransSantander").Value
+                            oDoc.Lines.UserFields.Fields.Item("U_EXO_TransfY").Value = oRsLin.Fields.Item("U_EXO_TransfY").Value
+                            oDoc.Lines.UserFields.Fields.Item("U_EXO_TransMM").Value = oRsLin.Fields.Item("U_EXO_TransMM").Value
+                            oDoc.Lines.UserFields.Fields.Item("U_EXO_NUMMOVIL").Value = oRsLin.Fields.Item("U_EXO_NUMMOVIL").Value
 #End Region
                             oRsLin.MoveNext()
                         Next
@@ -1103,7 +1119,7 @@ Public Class EXO_GLOBALES
     Public Shared Sub CrearInterlocutorSencillo(ByVal sFormato As String, ByRef sCodigoSAP As String, ByVal sSerieI As String, ByVal sBusinessPartnerTipo As String, ByVal sBusinessPartnerRazonSocial As String,
                                   ByVal sBusinessPartnerPais As String, ByVal sBusinessPartnerIFiscal As String, ByVal sAddID As String, ByVal sBusinessPartnerTIdentificacion As String,
                                   ByVal sBPCCPago As String, ByVal sBPCViaPago As String, ByVal sDirFac As String, ByVal sDirEnv As String, ByVal sDIR As String, ByVal sPob As String, ByVal sProv As String,
-                                  ByVal sCPos As String, ByVal sCPais As String, ByRef oCompany As SAPbobsCOM.Company, ByRef oSboApp As Application, ByRef oObjGlobal As EXO_Generales.EXO_General)
+                                  ByVal sCPos As String, ByVal sCPais As String, ByRef oCompany As SAPbobsCOM.Company, ByRef oSboApp As Application, ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI)
         Dim oOCRD As SAPbobsCOM.BusinessPartners = Nothing
         Dim sSQl As String = ""
         Dim oRs As SAPbobsCOM.Recordset = Nothing
@@ -1123,7 +1139,7 @@ Public Class EXO_GLOBALES
             End If
             'Ponemos el grupo de alquileres
             Dim sGrupo As String = ""
-            sGrupo = EXO_GLOBALES.GetValueDB(oObjGlobal.conexionSAP.compañia, """OCRG""", """GroupCode""", """GroupName""='ALQUILER'")
+            sGrupo = EXO_GLOBALES.GetValueDB(oObjGlobal.compañia, """OCRG""", """GroupCode""", """GroupName""='ALQUILER'")
             oOCRD.GroupCode = sGrupo
             If sBusinessPartnerRazonSocial <> "" Then : oOCRD.CardName = sBusinessPartnerRazonSocial : End If
             If sBusinessPartnerPais <> "" Then : oOCRD.Country = sBusinessPartnerPais : End If
@@ -1154,13 +1170,13 @@ Public Class EXO_GLOBALES
 
             'Condición de pago
             If sBPCCPago <> "" Then
-                sBPCCPago = EXO_GLOBALES.GetValueDB(oObjGlobal.conexionSAP.compañia, """OCTG""", """PymntGroup""", """PymntGroup""='" & sBPCCPago & "'")
+                sBPCCPago = EXO_GLOBALES.GetValueDB(oObjGlobal.compañia, """OCTG""", """PymntGroup""", """PymntGroup""='" & sBPCCPago & "'")
                 oSboApp.StatusBar.SetText("(EXO) - La condición de pago indicada no existe - " & sBPCCPago & " -  Se tomará el valor por defecto de la configuración.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
             End If
             If sBPCCPago = "" Then
                 Select Case sBusinessPartnerTipo
-                    Case "C" : sBPCCPago = EXO_GLOBALES.GetValueDB(oObjGlobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_CPV""", """Code""='" & sFormato & "'")
-                    Case "S" : sBPCCPago = EXO_GLOBALES.GetValueDB(oObjGlobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_CPC""", """Code""='" & sFormato & "'")
+                    Case "C" : sBPCCPago = EXO_GLOBALES.GetValueDB(oObjGlobal.compañia, """@EXO_CFCNF""", """U_EXO_CPV""", """Code""='" & sFormato & "'")
+                    Case "S" : sBPCCPago = EXO_GLOBALES.GetValueDB(oObjGlobal.compañia, """@EXO_CFCNF""", """U_EXO_CPC""", """Code""='" & sFormato & "'")
                 End Select
             End If
             oOCRD.PayTermsGrpCode = sBPCCPago
@@ -1168,13 +1184,13 @@ Public Class EXO_GLOBALES
             'Via de pago
             'Comprobamos que exista, si no existe cogemos el valor por defecto del configurador
             If sBPCViaPago <> "" Then
-                sBPCViaPago = EXO_GLOBALES.GetValueDB(oObjGlobal.conexionSAP.compañia, """OPYM""", """PayMethCod""", """PayMethCod""='" & sBPCViaPago & "'")
+                sBPCViaPago = EXO_GLOBALES.GetValueDB(oObjGlobal.compañia, """OPYM""", """PayMethCod""", """PayMethCod""='" & sBPCViaPago & "'")
                 oSboApp.StatusBar.SetText("(EXO) - La vía de pago indicada no existe - " & sBPCViaPago & " -  Se tomará el valor por defecto de la configuración.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
             End If
             If sBPCViaPago = "" Then
                 Select Case sBusinessPartnerTipo
-                    Case "C" : sBPCViaPago = EXO_GLOBALES.GetValueDB(oObjGlobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_VIAPV""", """Code""='" & sFormato & "'")
-                    Case "S" : sBPCViaPago = EXO_GLOBALES.GetValueDB(oObjGlobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_VIAPC""", """Code""='" & sFormato & "'")
+                    Case "C" : sBPCViaPago = EXO_GLOBALES.GetValueDB(oObjGlobal.compañia, """@EXO_CFCNF""", """U_EXO_VIAPV""", """Code""='" & sFormato & "'")
+                    Case "S" : sBPCViaPago = EXO_GLOBALES.GetValueDB(oObjGlobal.compañia, """@EXO_CFCNF""", """U_EXO_VIAPC""", """Code""='" & sFormato & "'")
                 End Select
             End If
             oOCRD.BPPaymentMethods.PaymentMethodCode = sBPCViaPago
@@ -1192,8 +1208,8 @@ Public Class EXO_GLOBALES
             'Indicamos el valor por defectoi de la pantalla de configuración
             Dim sBPImpuestoCod As String = ""
             Select Case sBusinessPartnerTipo
-                Case "C" : sBPImpuestoCod = EXO_GLOBALES.GetValueDB(oObjGlobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_IVAV""", """Code""='" & sFormato & "'")
-                Case "S" : sBPImpuestoCod = EXO_GLOBALES.GetValueDB(oObjGlobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_IVAP""", """Code""='" & sFormato & "'")
+                Case "C" : sBPImpuestoCod = EXO_GLOBALES.GetValueDB(oObjGlobal.compañia, """@EXO_CFCNF""", """U_EXO_IVAV""", """Code""='" & sFormato & "'")
+                Case "S" : sBPImpuestoCod = EXO_GLOBALES.GetValueDB(oObjGlobal.compañia, """@EXO_CFCNF""", """U_EXO_IVAP""", """Code""='" & sFormato & "'")
             End Select
             If sBPImpuestoCod <> "" Then
                 oOCRD.VatGroup = sBPImpuestoCod
@@ -1356,7 +1372,7 @@ Public Class EXO_GLOBALES
     End Sub
 #End Region
 #Region "Tratar ficheros"
-    Public Shared Sub TratarFichero_TXT(ByVal sArchivo As String, ByVal sDelimitador As String, ByRef oForm As SAPbouiCOM.Form, ByRef oCompany As SAPbobsCOM.Company, ByRef oSboApp As Application, ByRef objglobal As EXO_Generales.EXO_General)
+    Public Shared Sub TratarFichero_TXT(ByVal sArchivo As String, ByVal sDelimitador As String, ByRef oForm As SAPbouiCOM.Form, ByRef oCompany As SAPbobsCOM.Company, ByRef oSboApp As Application, ByRef objglobal As EXO_UIAPI.EXO_UIAPI)
         Dim sSQL As String = ""
         Dim oRs As SAPbobsCOM.Recordset = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim oRCampos As SAPbobsCOM.Recordset = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
@@ -1390,10 +1406,10 @@ Public Class EXO_GLOBALES
         Dim Texto As String = ""
         Dim sValorCampo As String = ""
 
-        Dim sDocumento As String = "" : Dim sRef As String = ""
+        Dim sDocumento As String = "" : Dim sRef As String = "" : Dim sFechaRef As String = ""
         Try
             'Tengo que buscar en la tabla el último numero de documento
-            iDoc = objglobal.SQL.sqlNumericaB1("SELECT isnull(MAX(cast(CODE as int)),0) FROM ""@EXO_TMPDOC"" ")
+            iDoc = objglobal.refDi.SQL.sqlNumericaB1("SELECT ifnull(MAX(""DocEntry""),0) FROM ""@EXO_TMPDOC"" ")
             ' miramos si existe el fichero y cargamos
             If File.Exists(sArchivo) Then
                 Using MyReader As New Microsoft.VisualBasic.
@@ -1408,9 +1424,16 @@ Public Class EXO_GLOBALES
                     End Select
 
                     Dim currentRow As String()
+                    Dim bPrimeraLinea As Boolean = True
                     While Not MyReader.EndOfData
                         Try
-                            currentRow = MyReader.ReadFields()
+                            If bPrimeraLinea = True Then
+                                currentRow = MyReader.ReadFields() : currentRow = MyReader.ReadFields()
+                                bPrimeraLinea = False
+                            Else
+                                currentRow = MyReader.ReadFields()
+                            End If
+
                             Dim currentField As String
                             Dim scampos(1) As String
                             Dim iCampo As Integer = 0
@@ -1421,7 +1444,7 @@ Public Class EXO_GLOBALES
                                 'SboApp.MessageBox(scampos(iCampo))
                             Next
                             'Buscamos campos para traducir 
-                            sSQL = "SELECT ""U_EXO_FEXCEL"",""U_EXO_CSAP"",""U_EXO_TDOC"" FROM ""@EXO_CFCNF"" "
+                            sSQL = "Select ""U_EXO_FEXCEL"",""U_EXO_CSAP"",""U_EXO_TDOC"" FROM ""@EXO_CFCNF"" "
                             sSQL &= " WHERE ""Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'"
                             oRs.DoQuery(sSQL)
                             If oRs.RecordCount > 0 Then
@@ -1461,6 +1484,7 @@ Public Class EXO_GLOBALES
                                 Dim sCuenta As String = "" : Dim sArt As String = "" : Dim sArtDes As String = ""
                                 Dim sCantidad As String = "0.00" : Dim sprecio As String = "0.00" : Dim sDtoLin As String = "0.00" : Dim sTotalServicios As String = "0.00" : Dim sPrecioBruto As String = "0.00"
                                 Dim sTextoAmpliado As String = "" : Dim sLinImpuestoCod As String = "" : Dim sLinRetCodigo As String = ""
+                                Dim sTransSantander As String = "" : Dim sTransfY As String = "" : Dim sTransMM As String = "" : Dim sNUMMOVIL As String = ""
                                 sSQL = "SELECT ""U_EXO_COD"",""U_EXO_OBL"" FROM ""@EXO_CSAPL"" WHERE ""Code""='" & sCodCampos & "'"
                                 oRCampos.DoQuery(sSQL)
                                 If oRCampos.RecordCount > 0 Then
@@ -1501,6 +1525,8 @@ Public Class EXO_GLOBALES
                                             End If
                                         Case "CardCode"
                                             sCliente = Leer_Campo(sCamposC(C, 1), sCamposC(C, 3), sCamposC(C, 2), scampos, oSboApp)
+                                            'Aqui vemos que si no está el cliente, vamos a buscar el IC por defecto
+                                            sCliente = EXO_GLOBALES.GetValueDB(objglobal.compañia, """@EXO_CFCNF""", """U_EXO_IC""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
                                             If sCamposC(C, 2) = "Y" And sCliente = "" Then
                                                 Exit Sub
                                             End If
@@ -1508,7 +1534,7 @@ Public Class EXO_GLOBALES
                                             'Sino existe por el CIF.  
                                             'Buscamos por el CODIGO DE SAP
                                             sExiste = ""
-                                            sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OCRD""", """CardCode""", """CardCode""='" & sCliente & "'")
+                                            sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OCRD""", """CardCode""", """CardCode""='" & sCliente & "'")
                                             If sExiste = "" Then
                                                 oSboApp.StatusBar.SetText("(EXO) - El Interlocutor  - " & sCliente & " - no se encuentra al buscarlo por el código de SAP. Se buscará por Nº identificación fiscal.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                                 sExiste = ""
@@ -1516,10 +1542,10 @@ Public Class EXO_GLOBALES
                                                 If IsNumeric(Left(sCliente, 2)) Then
                                                     sCliente = "ES" & sCliente
                                                 End If
-                                                sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OCRD""", """CardCode""", """LicTradNum""='" & sCliente & "'")
+                                                sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OCRD""", """CardCode""", """LicTradNum""='" & sCliente & "'")
                                                 If sExiste = "" Then
                                                     oSboApp.StatusBar.SetText("(EXO) - El Interlocutor  - " & sCliente & " - no existe al buscarlo por Nº identificación fiscal. Se buscará por el campo ID Número 2.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OCRD""", """CardCode""", """AddID""='" & sCliente & "'")
+                                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OCRD""", """CardCode""", """AddID""='" & sCliente & "'")
                                                     If sExiste = "" Then
                                                         oSboApp.StatusBar.SetText("(EXO) - El Interlocutor  - " & sCliente & " - no existe al buscarlo por ID Número 2.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                                         bCrearCli = True
@@ -1620,9 +1646,9 @@ Public Class EXO_GLOBALES
                                                 sDirEnv = "Entrega"
                                             End If
                                         Case "Comments"
-                                            sComent = "Importado a través del fichero - " & sArchivo & " - "
+                                            sComent = "Imp. Fich - " & sArchivo & " - "
                                             sComent &= Leer_Campo(sCamposC(C, 1), sCamposC(C, 3), sCamposC(C, 2), scampos, oSboApp)
-                                            If sCamposC(C, 2) = "Y" And sComent = "Importado a través del fichero - " & sArchivo & " - " Then
+                                            If sCamposC(C, 2) = "Y" And sComent = "Imp. fich. - " & sArchivo & " - " Then
                                                 Exit Sub
                                             End If
                                         Case "OpeningRemarks"
@@ -1673,10 +1699,10 @@ Public Class EXO_GLOBALES
                                     If sSerie = "" Then
                                         sMensaje &= "No se ha indicado ni Nº de documento ni serie. Se indica el Nº de serie por defecto."
                                         oSboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                                        'SboApp.MessageBox(sMensaje)
                                         sManual = "N"
                                         'Nº de serie
-                                        sSerie = Year(Now).ToString("0000")
+                                        'Cogemos la serie por defecto
+                                        sSerie = EXO_GLOBALES.GetValueDB(objglobal.compañia, """NNM1"" ""M1"" INNER JOIN ""ONNM"" ""ON"" ON ""ON"".""ObjectCode""=""M1"".""ObjectCode"" and ""ON"".""DfltSeries""=""M1"".""Series"" ", """SeriesName""", """M1"".""ObjectCode""='" & sTFac & "' ") 'Ventas
                                     Else
                                         sManual = "N"
                                     End If
@@ -1691,28 +1717,35 @@ Public Class EXO_GLOBALES
                                     Exit Sub
                                 Else
                                     'Ponemos formato para SQL
-                                    sFContable = Year(sFContable) & "-" & Month(sFContable) & "-" & Day(sFContable)
+                                    sFContable = Year(sFContable).ToString("0000") & "-" & Month(sFContable).ToString("00") & "-" & Day(sFContable).ToString("00")
                                     If sFDocumento = "" Then
                                         sMensaje &= "No se ha indicado una fecha de documento. Se actualizará con la fecha contable."
                                         oSboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                         sFDocumento = sFContable
                                     Else
-                                        sFDocumento = Year(sFDocumento) & "-" & Month(sFDocumento) & "-" & Day(sFDocumento)
+                                        sFDocumento = Year(sFDocumento).ToString("0000") & "-" & Month(sFDocumento).ToString("00") & "-" & Day(sFDocumento).ToString("00")
                                     End If
                                 End If
                                 If sTipoDto = "" Then : sTipoDto = "%" : End If ' Se toma si no tiene valor que el dto va en Porcentaje
                                 If sDto = "" Then : sDto = "0.00" : End If ' Se toma por defecto dto valor a 0.00
 
+                                If sCondPago = "" Then
+                                    sCondPago = EXO_GLOBALES.GetValueDB(objglobal.compañia, """@EXO_CFCNF""", """U_EXO_CPV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
+                                    sCondPago = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OCTG""", """PymntGroup""", """GroupNum""='" & sCondPago & "'")
+                                End If
+                                If sPeyMethod = "" Then
+                                    sPeyMethod = EXO_GLOBALES.GetValueDB(objglobal.compañia, """@EXO_CFCNF""", """U_EXO_VIAPV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
+                                End If
                                 If bCrearCli = True Then
                                     'Creamos el cliente con los datos que nos han dado
                                     'Busco y compruebo que exista la serie que han marcado en los parametros por defecto depediento si es de venta o de compra
                                     Dim sSerieIC As String = Nothing : Dim sTipoIC As String = ""
                                     Select Case sTFac
                                         Case "13", "14"
-                                            sSerieIC = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_SERIEV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
+                                            sSerieIC = EXO_GLOBALES.GetValueDB(objglobal.compañia, """@EXO_CFCNF""", """U_EXO_SERIEV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
                                             sTipoIC = "C"
                                         Case "18", "19", "22"
-                                            sSerieIC = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_SERIEC""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
+                                            sSerieIC = EXO_GLOBALES.GetValueDB(objglobal.compañia, """@EXO_CFCNF""", """U_EXO_SERIEC""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
                                             sTipoIC = "S"
                                     End Select
                                     If sSerieIC = "" Then
@@ -1732,27 +1765,28 @@ Public Class EXO_GLOBALES
                                 'Antes de insertar, comprobamos las direcciones de entrega y de facturación para comprobar que si son las de defecto del desarrollo, debemos buscar las de por defecto del cliente
                                 If sDirFac = "Facturación" Then
                                     sSQL = "SELECT ""BillToDef"" FROM ""OCRD"" WHERE ""CardCode""='" & sCliente & "' "
-                                    Dim sDIrFacDef As String = objglobal.SQL.sqlStringB1(sSQL)
+                                    Dim sDIrFacDef As String = objglobal.refDi.SQL.sqlStringB1(sSQL)
                                     If sDIrFacDef <> "" Then
                                         sDirFac = sDIrFacDef
                                     End If
                                 End If
                                 If sDirEnv = "Entrega" Then
                                     sSQL = "SELECT ""ShipToDef"" FROM ""OCRD"" WHERE ""CardCode""='" & sCliente & "' "
-                                    Dim sDirEnvDef As String = objglobal.SQL.sqlStringB1(sSQL)
+                                    Dim sDirEnvDef As String = objglobal.refDi.SQL.sqlStringB1(sSQL)
                                     If sDirEnvDef <> "" Then
                                         sDirEnv = sDirEnvDef
                                     End If
                                 End If
 
                                 If sTFac <> "" Then
-                                    If sDocumento <> sDocNum Or sRef <> sNumAtCard Then
+                                    If sDocumento <> sDocNum Or sRef <> sNumAtCard Or sFechaRef <> sFContable Then
                                         sDocumento = sDocNum
                                         sRef = sNumAtCard
+                                        sFechaRef = sFContable
                                         iDoc += 1
                                         iLinea = 0
-                                        sSQL = "insert into ""@EXO_TMPDOC"" values('" & iDoc.ToString & "','" & iDoc.ToString & "'," & iDoc.ToString & ",'N','',0," & objglobal.conexionSAP.compañia.UserSignature
-                                        sSQL &= ",'','',0,'',0,'','" & objglobal.usuario & "',"
+                                        sSQL = "insert into ""@EXO_TMPDOC"" values('" & iDoc.ToString & "','" & iDoc.ToString & "'," & iDoc.ToString & ",'N','',0," & objglobal.compañia.UserSignature
+                                        sSQL &= ",'','',0,'',0,'','" & objglobal.compañia.UserName & "',"
                                         sSQL &= "'" & sTDoc & "','" & sDocNum & "','" & sTFac & "','" & sManual & "','" & sSerie & "','" & sNumAtCard & "','" & sMoneda & "','','" & sEmpleado & "',"
                                         sSQL &= "'" & sCliente & "','" & sCodCliente & "','" & sFContable & "','" & sFDocumento & "','" & sFVto & "','" & sTipoDto & "',"
                                         sSQL &= EXO_GLOBALES.DblNumberToText(objglobal, sDto.ToString) & ",'" & sPeyMethod & "','" & sDirFac & "','" & sDirEnv & "','" & sComent.Replace("'", "") & "','"
@@ -1823,6 +1857,26 @@ Public Class EXO_GLOBALES
                                                 If sCamposL(L, 2) = "Y" And sPrecioBruto = "" Then
                                                     Exit Sub
                                                 End If
+                                            Case "EXO_TransSantander"
+                                                sTransSantander = Leer_Campo(sCamposL(L, 1), sCamposL(L, 3), sCamposL(L, 2), scampos, oSboApp)
+                                                If sCamposL(L, 2) = "Y" And sTransSantander = "" Then
+                                                    Exit Sub
+                                                End If
+                                            Case "EXO_TransfY"
+                                                sTransfY = Leer_Campo(sCamposL(L, 1), sCamposL(L, 3), sCamposL(L, 2), scampos, oSboApp)
+                                                If sCamposL(L, 2) = "Y" And sTransfY = "" Then
+                                                    Exit Sub
+                                                End If
+                                            Case "EXO_TransMM"
+                                                sTransMM = Leer_Campo(sCamposL(L, 1), sCamposL(L, 3), sCamposL(L, 2), scampos, oSboApp)
+                                                If sCamposL(L, 2) = "Y" And sTransMM = "" Then
+                                                    Exit Sub
+                                                End If
+                                            Case "EXO_NUMMOVIL"
+                                                sNUMMOVIL = Leer_Campo(sCamposL(L, 1), sCamposL(L, 3), sCamposL(L, 2), scampos, oSboApp)
+                                                If sCamposL(L, 2) = "Y" And sNUMMOVIL = "" Then
+                                                    Exit Sub
+                                                End If
                                         End Select
                                     Next
                                     oSboApp.StatusBar.SetText("(EXO) - Valores de líneas leídos.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
@@ -1832,7 +1886,7 @@ Public Class EXO_GLOBALES
                                     'Comprobamos que exista la cuenta                                  
                                     If sCuenta <> "" Then
                                         sExiste = ""
-                                        sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OACT""", """AcctCode""", """AcctCode""='" & sCuenta & "'")
+                                        sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OACT""", """AcctCode""", """AcctCode""='" & sCuenta & "'")
                                         If sExiste = "" Then
                                             oSboApp.StatusBar.SetText("(EXO) - La Cuenta contable SAP  - " & sCuenta & " - no existe.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                             oSboApp.MessageBox("La Cuenta contable SAP - " & sCuenta & " - no existe.")
@@ -1842,7 +1896,16 @@ Public Class EXO_GLOBALES
                                     'Comprobamos que exista el artículo
                                     If sTipoLineas = "I" Then
                                         sExiste = ""
-                                        sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OITM""", """ItemCode""", """ItemCode"" like '" & sArt & "'")
+                                        'Tenemos que buscar el artículo por el monto en la descripción
+                                        If sArt = "" Then
+                                            sSQL = "SELECT ""ItemCode"" FROM ""OITM"" WHERE ""ItemName"" like '%Recarga " & sprecio & "%'"
+                                            sArt = objglobal.refDi.SQL.sqlStringB1(sSQL)
+                                            If sArt = "" Then
+                                                sSQL = "SELECT ""ItemCode"" FROM ""OITM"" WHERE ""ItemName"" like '%Recarga " & sprecio.Replace(".", ",") & "%'"
+                                                sArt = objglobal.refDi.SQL.sqlStringB1(sSQL)
+                                            End If
+                                        End If
+                                        sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OITM""", """ItemCode""", """ItemCode"" like '" & sArt & "'")
                                         If sExiste = "" Then
                                             oSboApp.StatusBar.SetText("(EXO) - El Artículo - " & sArt & " - " & sArtDes & " no existe. Borrelo de la sección concepto para poderlo crear automáticamente.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                             oSboApp.MessageBox("El Artículo - " & sArt & " - " & sArtDes & " no existe. Borrelo de la sección concepto para poderlo crear automáticamente.")
@@ -1852,7 +1915,7 @@ Public Class EXO_GLOBALES
                                         If sCuenta = "" Then
                                             ' No puede estar la cuenta vacía si es de tipo servicio
                                             sExiste = ""
-                                            sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_CSRV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
+                                            sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """@EXO_CFCNF""", """U_EXO_CSRV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
                                             If sExiste = "" Then
                                                 sMensaje = " La cuenta en la línea del servicio no puede estar vacía. Por favor, Revise los datos de la parametrización."
                                                 oSboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
@@ -1867,22 +1930,22 @@ Public Class EXO_GLOBALES
                                     If sLinImpuestoCod = "" Then
                                         Select Case sTFac
                                             Case "13", "14" 'Ventas
-                                                sLinImpuestoCod = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_IVAV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
+                                                sLinImpuestoCod = EXO_GLOBALES.GetValueDB(objglobal.compañia, """@EXO_CFCNF""", """U_EXO_IVAV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
                                             Case "18", "19", "22" 'Compras
-                                                sLinImpuestoCod = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_IVAC""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
+                                                sLinImpuestoCod = EXO_GLOBALES.GetValueDB(objglobal.compañia, """@EXO_CFCNF""", """U_EXO_IVAC""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
                                         End Select
                                     Else
                                         sLinImpuestoCod = sLinImpuestoCod.Replace(",", ".")
                                         Select Case sTFac
                                             Case "13", "14" 'Ventas
-                                                sLinImpuestoCod = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OVTG""", """Code""", """Rate""='" & sLinImpuestoCod & "' and  LENGTH(""Code"")=2 and left(""Code"",1)='R' and ""Category""='O' ")
+                                                sLinImpuestoCod = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OVTG""", """Code""", """Rate""='" & sLinImpuestoCod & "' and  LENGTH(""Code"")=2 and left(""Code"",1)='R' and ""Category""='O' ")
                                             Case "18", "19", "22" 'Compras
-                                                sLinImpuestoCod = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OVTG""", """Code""", """Rate""='" & sLinImpuestoCod & "' and  LENGTH(""Code"")=2 and left(""Code"",1)='S' and ""Category""='I' ")
+                                                sLinImpuestoCod = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OVTG""", """Code""", """Rate""='" & sLinImpuestoCod & "' and  LENGTH(""Code"")=2 and left(""Code"",1)='S' and ""Category""='I' ")
                                         End Select
                                     End If
                                     If sLinImpuestoCod <> "" Then
                                         sExiste = ""
-                                        sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OVTG""", """Code""", """Code""='" & sLinImpuestoCod & "'")
+                                        sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OVTG""", """Code""", """Code""='" & sLinImpuestoCod & "'")
                                         If sExiste = "" Then
                                             oSboApp.StatusBar.SetText("(EXO) - El Grupo Impositivo  - " & sLinImpuestoCod & " - no existe.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                             oSboApp.MessageBox("El Grupo Impositivo  - " & sLinImpuestoCod & " - no existe.")
@@ -1891,32 +1954,42 @@ Public Class EXO_GLOBALES
                                     End If
                                     'Comprobamos que exista la retención si está relleno
                                     If sLinRetCodigo <> "" Then
-                                        sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """CRD4""", """WTCode""", """CardCode""='" & sCliente & "' and ""WTCode""='" & sLinRetCodigo & "'")
+                                        sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """CRD4""", """WTCode""", """CardCode""='" & sCliente & "' and ""WTCode""='" & sLinRetCodigo & "'")
                                         If sExiste = "" Then
                                             oSboApp.StatusBar.SetText("(EXO) - El indicador de Retención  - " & sLinRetCodigo & " - no no está marcado para el interlocutor " & sCliente & ". Por favor, revise el interlocutor.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                             oSboApp.MessageBox("El indicador de Retención  - " & sLinRetCodigo & " - no no está marcado para el interlocutor " & sCliente & ". Por favor, revise el interlocutor.")
                                             Exit Sub
                                         End If
                                     End If
+                                    'Precio Bruto
+                                    If sPrecioBruto = "" Then
+                                        sPrecioBruto = "0"
+                                    End If
+                                    'Revisamos la cantidad
+                                    If sCantidad.Trim = "" Then
+                                        sCantidad = "1"
+                                    End If
+
 #End Region
                                     'Grabamos la línea
-                                    sSQL = "insert into ""@EXO_TMPDOCL"" values('" & iDoc.ToString & "','" & iLinea & "','',0,'" & objglobal.usuario & "',"
+                                    sSQL = "insert into ""@EXO_TMPDOCL"" values('" & iDoc.ToString & "'," & iLinea & ",'',0,'" & objglobal.compañia.UserName & "',"
                                     sSQL &= "'" & sCuenta & "','" & sArt & "','" & sArtDes & "'," & EXO_GLOBALES.DblNumberToText(objglobal, sCantidad.ToString).Replace(",", ".") & ","
                                     sSQL &= EXO_GLOBALES.DblNumberToText(objglobal, sprecio.ToString) & "," & EXO_GLOBALES.DblNumberToText(objglobal, sDtoLin.ToString)
                                     sSQL &= "," & EXO_GLOBALES.DblNumberToText(objglobal, sTotalServicios.ToString).Replace(",", ".") & ",'" & sLinImpuestoCod & "','" & sLinRetCodigo & "','"
-                                    sSQL &= sTextoAmpliado & "','" & sTipoLineas & "'," & sPrecioBruto & " ) "
+                                    sSQL &= sTextoAmpliado & "','" & sTipoLineas & "'," & sPrecioBruto & ", '', '" & sTransSantander & "', '" & sTransfY & "', '" & sTransMM & "', '"
+                                    sSQL &= sNUMMOVIL & "' ) "
                                     oRs.DoQuery(sSQL)
                                 End If
                             End If
                         Catch ex As Microsoft.VisualBasic.
                             FileIO.MalformedLineException
-                            objglobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Línea " & ex.Message & " no es válida y se omitirá.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                            objglobal.SBOApp.StatusBar.SetText("(EXO) - Línea " & ex.Message & " no es válida y se omitirá.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                             oSboApp.MessageBox("Línea " & ex.Message & " no es válida y se omitirá.")
                         End Try
                     End While
                 End Using
             Else
-                objglobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - No se ha encontrado el fichero txt a cargar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objglobal.SBOApp.StatusBar.SetText("(EXO) - No se ha encontrado el fichero txt a cargar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                 Exit Sub
             End If
         Catch exCOM As System.Runtime.InteropServices.COMException
@@ -1930,7 +2003,43 @@ Public Class EXO_GLOBALES
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRCampos, Object))
         End Try
     End Sub
-    Public Shared Sub TratarFichero_Excel(ByVal sArchivo As String, ByRef oForm As SAPbouiCOM.Form, ByRef oCompany As SAPbobsCOM.Company, ByRef oSboApp As Application, ByRef objglobal As EXO_Generales.EXO_General)
+    Public Shared Sub ActualizaNumATCard(ByRef oCompany As SAPbobsCOM.Company, ByRef objglobal As EXO_UIAPI.EXO_UIAPI)
+        Dim sSQL As String = ""
+        Dim oRs As SAPbobsCOM.Recordset = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim sFactura As String = ""
+        Dim sPrimerticket As String = "" : Dim sUltimoTiket As String = ""
+        Try
+            'Por cada Línea de cabecera vemos primera línea y ultima para sacar el ticket y ponerlo en el campo
+            sSQL = "SELECT * FROM ""@EXO_TMPDOC"" where ""U_EXO_USR""='" & objglobal.compañia.UserName & "'  "
+            oRs.DoQuery(sSQL)
+            For i = 0 To oRs.RecordCount - 1
+                sFactura = oRs.Fields.Item("Code").Value.ToString
+                If sFactura <> "" Then
+                    sSQL = "SELECT  ""U_EXO_TransfY""  FROM ""@EXO_TMPDOCL"" where ""Code""='" & sFactura & "' and ""LineId""=(SELECT MIN(""LineId"") FROM ""@EXO_TMPDOCL"" where ""Code""='" & sFactura & "' )"
+                    sPrimerticket = objglobal.refDi.SQL.sqlStringB1(sSQL)
+                    sSQL = "SELECT  ""U_EXO_TransfY""  FROM ""@EXO_TMPDOCL"" where ""Code""='" & sFactura & "' and ""LineId""=(SELECT MAX(""LineId"") FROM ""@EXO_TMPDOCL"" where ""Code""='" & sFactura & "' )"
+                    sUltimoTiket = objglobal.refDi.SQL.sqlStringB1(sSQL)
+                    'Actualizamos Campo NumAtCard
+                    If sPrimerticket <> sUltimoTiket Then
+                        sSQL = "UPDATE  ""@EXO_TMPDOC"" SET ""U_EXO_REF""='" & sPrimerticket & sUltimoTiket & "' where ""Code""='" & sFactura & "'"
+                    Else
+                        sSQL = "UPDATE  ""@EXO_TMPDOC"" SET ""U_EXO_REF""='" & sPrimerticket & "' where ""Code""='" & sFactura & "'"
+                    End If
+
+                    objglobal.refDi.SQL.sqlStringB1(sSQL)
+                End If
+                oRs.MoveNext()
+            Next
+
+        Catch exCOM As System.Runtime.InteropServices.COMException
+            Throw exCOM
+        Catch ex As Exception
+            Throw ex
+        Finally
+            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
+        End Try
+    End Sub
+    Public Shared Sub TratarFichero_Excel(ByVal sArchivo As String, ByRef oForm As SAPbouiCOM.Form, ByRef oCompany As SAPbobsCOM.Company, ByRef oSboApp As Application, ByRef objglobal As EXO_UIAPI.EXO_UIAPI)
         Dim sSQL As String = ""
         Dim oRs As SAPbobsCOM.Recordset = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim oRCampos As SAPbobsCOM.Recordset = CType(oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
@@ -2562,19 +2671,19 @@ Public Class EXO_GLOBALES
                                 Dim sExisteIC As String = ""
                                 Select Case Left(sCodCliente, 2)
                                     Case "43"
-                                        sExisteIC = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OCRD""", """CardCode""", """LicTradNum"" like '%" & sCliente & "%' and ""CardType""='C'")
+                                        sExisteIC = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OCRD""", """CardCode""", """LicTradNum"" like '%" & sCliente & "%' and ""CardType""='C'")
                                         If sExisteIC = "" Then
                                             'sCliente = "C" & Mid(sCodCliente, 4)
-                                            sExisteIC = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OCRD""", """CardCode""", """AddID""='" & sCodCliente & "' and ""CardType""='C'")
+                                            sExisteIC = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OCRD""", """CardCode""", """AddID""='" & sCodCliente & "' and ""CardType""='C'")
                                             sCliente = sExisteIC
                                         Else
                                             sCliente = sExisteIC
                                         End If
                                     Case "40"
-                                        sExisteIC = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OCRD""", """CardCode""", """LicTradNum"" like '%" & sCliente & "%' and ""CardType""='S'")
+                                        sExisteIC = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OCRD""", """CardCode""", """LicTradNum"" like '%" & sCliente & "%' and ""CardType""='S'")
                                         If sExisteIC = "" Then
                                             'sCliente = "P" & Mid(sCodCliente, 4)
-                                            sExisteIC = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OCRD""", """CardCode""", """AddID""='" & sCodCliente & "' and ""CardType""='S'")
+                                            sExisteIC = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OCRD""", """CardCode""", """AddID""='" & sCodCliente & "' and ""CardType""='S'")
                                             sCliente = sExisteIC
                                         Else
                                             sCliente = sExisteIC
@@ -2583,8 +2692,8 @@ Public Class EXO_GLOBALES
                                 'Insertar en la tabla temporal la cabecera
                                 If sTFac <> "" Then
                                     iDoc += 1
-                                    sSQL = "insert into ""@EXO_TMPDOC"" values('" & iDoc.ToString & "','" & iDoc.ToString & "'," & iDoc.ToString & ",'N','',0," & objglobal.conexionSAP.compañia.UserSignature
-                                            sSQL &= ",'','',0,'',0,'','" & objglobal.usuario & "',"
+                                    sSQL = "insert into ""@EXO_TMPDOC"" values('" & iDoc.ToString & "','" & iDoc.ToString & "'," & iDoc.ToString & ",'N','',0," & objglobal.compañia.UserName
+                                    sSQL &= ",'','',0,'',0,'','" & objglobal.compañia.UserName & "',"
                                     sSQL &= "'" & sTDoc & "','" & sDocNum & "','" & sTFac & "','" & sManual & "','" & sSerie & "','" & sNumAtCard & "','" & sMoneda & "','','" & sEmpleado & "',"
                                     sSQL &= "'" & sCliente & "','" & sCodCliente & "','" & sFContable & "','" & sFDocumento & "','" & sFVto & "','" & sTipoDto & "',"
                                     sSQL &= EXO_GLOBALES.DblNumberToText(objglobal, sDto.ToString) & ",'" & sPeyMethod & "','" & sDirFac & "','" & sDirEnv & "','" & sComent.Replace("'", "") & "','"
@@ -2930,7 +3039,7 @@ Public Class EXO_GLOBALES
                                 'Comprobamos que exista la cuenta
                                 If sCuenta <> "" Then
                                     sExiste = ""
-                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OACT""", """AcctCode""", """AcctCode""='" & sCuenta & "'")
+                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OACT""", """AcctCode""", """AcctCode""='" & sCuenta & "'")
                                     If sExiste = "" Then
                                         oSboApp.StatusBar.SetText("(EXO) - La Cuenta contable SAP  - " & sCuenta & " - no existe.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                         oSboApp.MessageBox("La Cuenta contable SAP - " & sCuenta & " - no existe.")
@@ -2945,7 +3054,7 @@ Public Class EXO_GLOBALES
                                 'Comprobamos que exista el artículo
                                 If sTipoLineas = "I" Then
                                     sExiste = ""
-                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OITM""", """ItemCode""", """ItemCode"" like '" & sArt & "'")
+                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OITM""", """ItemCode""", """ItemCode"" like '" & sArt & "'")
                                     If sExiste = "" Then
                                         oSboApp.StatusBar.SetText("(EXO) - El Artículo - " & sArt & " - " & sArtDes & " no existe. Borrelo de la sección concepto para poderlo crear automáticamente.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                         oSboApp.MessageBox("El Artículo - " & sArt & " - " & sArtDes & " no existe. Borrelo de la sección concepto para poderlo crear automáticamente.")
@@ -2956,13 +3065,13 @@ Public Class EXO_GLOBALES
                                         ' No puede estar la cuenta vacía si es de tipo servicio
                                         'Dim sMensaje As String = " La cuenta esta vacía. Se coge los datos por defecto."
                                         'SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                                        sCuenta = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_CSRV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
+                                        sCuenta = EXO_GLOBALES.GetValueDB(objglobal.compañia, """@EXO_CFCNF""", """U_EXO_CSRV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
                                     End If
                                 End If
                                 'Comprobamos que exista el impuesto si está relleno
                                 If sLinImpuestoCod <> "" Then
                                     sExiste = ""
-                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """OVTG""", """Code""", """Code""='" & sLinImpuestoCod & "'")
+                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """OVTG""", """Code""", """Code""='" & sLinImpuestoCod & "'")
                                     If sExiste = "" Then
                                         oSboApp.StatusBar.SetText("(EXO) - El Grupo Impositivo  - " & sLinImpuestoCod & " - no existe.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                         oSboApp.MessageBox("El Grupo Impositivo  - " & sLinImpuestoCod & " - no existe.")
@@ -2971,7 +3080,7 @@ Public Class EXO_GLOBALES
                                 End If
                                 'Comprobamos que exista la retención si está relleno
                                 If sLinRetCodigo <> "" Then
-                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.conexionSAP.compañia, """CRD4""", """WTCode""", """CardCode""='" & sCliente & "' and ""WTCode""='" & sLinRetCodigo & "'")
+                                    sExiste = EXO_GLOBALES.GetValueDB(objglobal.compañia, """CRD4""", """WTCode""", """CardCode""='" & sCliente & "' and ""WTCode""='" & sLinRetCodigo & "'")
                                     If sExiste = "" Then
                                         oSboApp.StatusBar.SetText("(EXO) - El indicador de Retención  - " & sLinRetCodigo & " - no no está marcado para el interlocutor " & sCliente & ". Por favor, revise el interlocutor.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                         oSboApp.MessageBox("El indicador de Retención  - " & sLinRetCodigo & " - no no está marcado para el interlocutor " & sCliente & ". Por favor, revise el interlocutor.")
@@ -3003,7 +3112,7 @@ Public Class EXO_GLOBALES
                                     'Escribimos el texto para el servicio
                                     sTextoAmpliado = "FACTURA SERVICIO"
                                 End If
-                                sSQL = "insert into ""@EXO_TMPDOCL"" values('" & iDoc.ToString & "','" & iLinea & "','',0,'" & objglobal.usuario & "',"
+                                sSQL = "insert into ""@EXO_TMPDOCL"" values('" & iDoc.ToString & "','" & iLinea & "','',0,'" & objglobal.compañia.UserName & "',"
                                 sSQL &= "'" & sCuenta & "','" & sArt & "','" & sArtDes & "'," & EXO_GLOBALES.DblNumberToText(objglobal, sCantidad.ToString).Replace(",", ".") & ","
                                 sSQL &= EXO_GLOBALES.DblNumberToText(objglobal, sprecio.ToString) & "," & EXO_GLOBALES.DblNumberToText(objglobal, sDtoLin.ToString)
                                 sSQL &= "," & EXO_GLOBALES.DblNumberToText(objglobal, sTotalServicios.ToString).Replace(",", ".") & ",'" & sLinImpuestoCod & "','" & sLinRetCodigo & "','"
@@ -3021,7 +3130,7 @@ Public Class EXO_GLOBALES
                     oSboApp.MessageBox("Error inesperado. No se ha encontrado la configuración de lectura del fichero de excel. No se puede cargar el fichero.")
                 End If
             Else
-                objglobal.conexionSAP.SBOApp.StatusBar.SetText("No se ha encontrado el fichero excel a cargar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objglobal.SBOApp.StatusBar.SetText("No se ha encontrado el fichero excel a cargar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                 Exit Sub
             End If
 

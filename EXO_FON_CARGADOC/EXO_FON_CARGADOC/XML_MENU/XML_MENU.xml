@@ -5,9 +5,6 @@
       <Menu Checked="0" Enabled="1" FatherUID="EXO-MnCDoc" Image="" String="Parametrización" Type="2" UniqueID="EXO-MnCDocP"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="EXO-MnCDocP" Image="" String="Campos SAP" Type="1" UniqueID="EXO-MnCSAP"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="EXO-MnCDocP" Image="" String="Configurador" Type="1" UniqueID="EXO-MnCFCF"></Menu>
-      <Menu Checked="0" Enabled="1" FatherUID="EXO-MnCDoc" Image="" String="Carga de Interlocutores" Type="1" UniqueID="EXO-MnCIC"></Menu>
-      <Menu Checked="0" Enabled="1" FatherUID="EXO-MnCDoc" Image="" String="Documentos de compra" Type="2" UniqueID="EXO-MnCDocC"></Menu>
-      <Menu Checked="0" Enabled="1" FatherUID="EXO-MnCDocC" Image="" String="Carga Facturas" Type="1" UniqueID="EXO-MnCFac"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="EXO-MnCDoc" Image="" String="Documentos de Venta" Type="2" UniqueID="EXO-MnCDocV"></Menu>
       <Menu Checked="0" Enabled="1" FatherUID="EXO-MnCDocV" Image="" String="Carga Facturas" Type="1" UniqueID="EXO-MnVFac"></Menu>
     </action>

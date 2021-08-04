@@ -65,34 +65,40 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EPPlus">
-      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.37\x64\desarrollo\EPPlus.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="EPPlus, Version=4.0.5.0, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.42\x64\EPPlus.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_BasicDLL">
-      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.37\x64\desarrollo\EXO_BasicDLL.dll</HintPath>
+    <Reference Include="EXO_BasicDLL, Version=9.1.0.37, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.42\x64\EXO_BasicDLL.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_CleanCOM">
-      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.37\x64\desarrollo\EXO_CleanCOM.dll</HintPath>
+    <Reference Include="EXO_CleanCOM, Version=9.1.0.37, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.42\x64\EXO_CleanCOM.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_DIAPI">
-      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.37\x64\desarrollo\EXO_DIAPI.dll</HintPath>
+    <Reference Include="EXO_DIAPI, Version=9.1.0.37, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.42\x64\EXO_DIAPI.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_Generales">
-      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.37\x64\desarrollo\EXO_Generales.dll</HintPath>
+    <Reference Include="EXO_Generales, Version=9.1.0.37, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.42\x64\EXO_Generales.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_Log">
-      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.37\x64\desarrollo\EXO_Log.dll</HintPath>
+    <Reference Include="EXO_Log, Version=9.1.0.37, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.42\x64\EXO_Log.dll</HintPath>
     </Reference>
-    <Reference Include="EXO_UIAPI">
-      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.37\x64\desarrollo\EXO_UIAPI.dll</HintPath>
+    <Reference Include="EXO_UIAPI, Version=9.1.0.37, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.42\x64\EXO_UIAPI.dll</HintPath>
     </Reference>
     <Reference Include="Interop.SAPbobsCOM">
-      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.37\x64\desarrollo\Interop.SAPbobsCOM.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.42\x64\Interop.SAPbobsCOM.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.SAPbouiCOM">
-      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.37\x64\desarrollo\Interop.SAPbouiCOM.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Cliente\9.1.0.42\x64\Interop.SAPbouiCOM.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="System" />
@@ -115,9 +121,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EXO_CCFAC.vb" />
     <Compile Include="EXO_CFRP.vb" />
-    <Compile Include="EXO_CIC.vb" />
     <Compile Include="EXO_CVFAC.vb" />
     <Compile Include="EXO_FCCNF.vb" />
     <Compile Include="EXO_GLOBALES.vb" />
@@ -169,7 +173,9 @@
     <EmbeddedResource Include="XML_BD\UT_EXO_TMPDOC.xml" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="XML_BD\UT_EXO_TMPDOCL.xml" />
+    <EmbeddedResource Include="XML_BD\UT_EXO_TMPDOCL.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML_BD\UT_EXO_TMPDOCLT.xml" />
@@ -180,14 +186,19 @@
   <ItemGroup>
     <EmbeddedResource Include="XML_MENU\XML_MENU.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML_BD\UDFs_INV1.xml" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
     <PostBuildEvent>IF $(PlatformName) == x86 (
-copy """$(TargetPath)""" "E:\Desarrollo\Cliente\9.1.0.37\x86\desarrollo\DLLs\$(TargetFileName)"
+copy """$(TargetPath)""" "E:\Desarrollo\Cliente\9.1.0.42\x84\DLLs\$(TargetFileName)"
 copy """$(TargetPath)""" "\\xper-rdpdes01\e$\PathServidor\PRUEBADVD\10.Dll\EXT\$(TargetFileName)"
 ) ELSE (
-copy """$(TargetPath)""" "E:\Desarrollo\Cliente\9.1.0.37\x64\desarrollo\DLLs\$(TargetFileName)"
+copy """$(TargetPath)""" "E:\Desarrollo\Cliente\9.1.0.42\x64\DLLs\$(TargetFileName)"
 copy """$(TargetPath)""" "\\xper-rdpdes01\e$\PathServidor\PRUEBADVD\10.Dll_64\EXT\$(TargetFileName)"
+Copy """$(TargetPath)""" "\\XPER-RDPDES01\Ficheros\demo_sbo\10.Dll_64\EXT\$(TargetFileName)"
+
 )
 </PostBuildEvent>
   </PropertyGroup>

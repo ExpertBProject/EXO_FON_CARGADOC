@@ -3,29 +3,29 @@ Imports SAPbouiCOM
 Imports OfficeOpenXml
 Imports System.IO
 Public Class EXO_CVFAC
-    Inherits EXO_Generales.EXO_DLLBase
-    Public Sub New(ByRef general As EXO_Generales.EXO_General, ByRef actualizar As Boolean)
-        MyBase.New(general, actualizar)
+    Inherits EXO_UIAPI.EXO_DLLBase
+    Public Sub New(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef actualizar As Boolean, usaLicencia As Boolean, idAddOn As Integer)
+        MyBase.New(oObjGlobal, actualizar, False, idAddOn)
         ' cargamenu()       
     End Sub
     Private Sub cargamenu()
         Dim Path As String = ""
-        Dim menuXML As String = objGlobal.Functions.leerEmbebido(Me.GetType(), "XML_MENU.xml")
-        SboApp.LoadBatchActions(menuXML)
-        Dim res As String = SboApp.GetLastBatchResults
-
-        If SboApp.Menus.Exists("EXO-MnCDoc") = True Then
-            Path = objGlobal.conexionSAP.path & "\02.Menus"
+        Dim menuXML As String = objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_MENU.xml")
+        objGlobal.SBOApp.LoadBatchActions(menuXML)
+        Dim res As String = objGlobal.SBOApp.GetLastBatchResults
+        Path = objGlobal.refDi.OGEN.pathGeneral.ToString.Trim
+        If objGlobal.SBOApp.Menus.Exists("EXO-MnCDoc") = True Then
+            Path &= "\02.Menus"
             If Path <> "" Then
                 If IO.File.Exists(Path & "\MnCDOC.png") = True Then
-                    SboApp.Menus.Item("EXO-MnCDoc").Image = Path & "\MnCDOC.png"
+                    objGlobal.SBOApp.Menus.Item("EXO-MnCDoc").Image = Path & "\MnCDOC.png"
                 End If
             End If
         End If
     End Sub
     Public Overrides Function filtros() As EventFilters
         Dim filtrosXML As Xml.XmlDocument = New Xml.XmlDocument
-        filtrosXML.LoadXml(objGlobal.Functions.leerEmbebido(Me.GetType(), "XML_FILTROS.xml"))
+        filtrosXML.LoadXml(objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_FILTROS.xml"))
         Dim filtro As SAPbouiCOM.EventFilters = New SAPbouiCOM.EventFilters()
         filtro.LoadFromXML(filtrosXML.OuterXml)
 
@@ -34,7 +34,7 @@ Public Class EXO_CVFAC
     Public Overrides Function menus() As XmlDocument
         Return Nothing
     End Function
-    Public Overrides Function SBOApp_MenuEvent(ByRef infoEvento As EXO_Generales.EXO_MenuEvent) As Boolean
+    Public Overrides Function SBOApp_MenuEvent(infoEvento As MenuEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
 
         Try
@@ -52,10 +52,10 @@ Public Class EXO_CVFAC
             Return MyBase.SBOApp_MenuEvent(infoEvento)
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
@@ -64,27 +64,22 @@ Public Class EXO_CVFAC
     Public Function CargarFormCDOC() As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim Path As String = ""
         Dim oFP As SAPbouiCOM.FormCreationParams = Nothing
-        Dim EXO_Xml As New EXO_Generales.EXO_XML(objGlobal.conexionSAP.refCompañia, objGlobal.conexionSAP.refSBOApp)
 
         CargarFormCDOC = False
 
         Try
-            Path = objGlobal.conexionSAP.pathPantallas
-            If Path = "" Then
-                Return False
-            End If
 
-            oFP = CType(SboApp.CreateObject(SAPbouiCOM.BoCreatableObjectType.cot_FormCreationParams), SAPbouiCOM.FormCreationParams)
-            oFP.XmlData = objGlobal.conexionSAP.leerEmbebido(Me.GetType(), "EXO_CVFAC.srf")
+            oFP = CType(objGlobal.SBOApp.CreateObject(SAPbouiCOM.BoCreatableObjectType.cot_FormCreationParams), SAPbouiCOM.FormCreationParams)
+            oFP.XmlData = objGlobal.leerEmbebido(Me.GetType(), "EXO_CVFAC.srf")
 
             Try
-                oForm = SboApp.Forms.AddEx(oFP)
+                oForm = objGlobal.SBOApp.Forms.AddEx(oFP)
             Catch ex As Exception
                 If ex.Message.StartsWith("Form - already exists") = True Then
-                    SboApp.StatusBar.SetText("El formulario ya está abierto.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    objGlobal.SBOApp.StatusBar.SetText("El formulario ya está abierto.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                     Exit Function
                 ElseIf ex.Message.StartsWith("Se produjo un error interno") = True Then 'Falta de autorización
                     Exit Function
@@ -99,16 +94,16 @@ Public Class EXO_CVFAC
             End If
             CargarFormCDOC = True
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
             oForm.Visible = True
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
         End Try
     End Function
-    Public Overrides Function SBOApp_ItemEvent(ByRef infoEvento As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Public Overrides Function SBOApp_ItemEvent(infoEvento As ItemEvent) As Boolean
         Try
             If infoEvento.InnerEvent = False Then
                 If infoEvento.BeforeAction = False Then
@@ -191,26 +186,21 @@ Public Class EXO_CVFAC
 
             Return MyBase.SBOApp_ItemEvent(infoEvento)
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         End Try
     End Function
-    Private Function EventHandler_Choose_FromList_After(ByRef pVal As EXO_Generales.EXO_infoItemEvent) As Boolean
-        Dim oForm As SAPbouiCOM.Form = SboApp.Forms.Item(pVal.FormUID)
+    Private Function EventHandler_Choose_FromList_After(ByRef pVal As ItemEvent) As Boolean
+        Dim oForm As SAPbouiCOM.Form = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
 
         EventHandler_Choose_FromList_After = False
 
         Try
-
             If pVal.ItemUID = "grd_DOC" AndAlso pVal.ChooseFromListUID = "CFL_0" Then
-                Dim oCFLEvento As EXO_Generales.EXO_infoItemEvent = Nothing
-                Dim oDataTable As EXO_Generales.EXO_infoItemEvent.EXO_SeleccionadosCHFL = Nothing
-                oCFLEvento = CType(pVal, EXO_Generales.EXO_infoItemEvent)
-
-                oDataTable = oCFLEvento.SelectedObjects
+                Dim oDataTable As SAPbouiCOM.IChooseFromListEvent = CType(pVal, SAPbouiCOM.IChooseFromListEvent)
                 If oDataTable IsNot Nothing Then
                     Try
                         oForm.DataSources.DataTables.Item("DT_DOC").SetValue("Comercial", pVal.Row, oDataTable.GetValue("SlpName", 0).ToString)
@@ -225,21 +215,21 @@ Public Class EXO_CVFAC
 
         Catch exCOM As System.Runtime.InteropServices.COMException
             oForm.Freeze(False)
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
             oForm.Freeze(False)
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
-    Private Function EventHandler_Matrix_Link_Press_Before(ByRef pVal As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Private Function EventHandler_Matrix_Link_Press_Before(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
         Dim sModo As String = ""
         EventHandler_Matrix_Link_Press_Before = False
 
         Try
-            oForm = SboApp.Forms.Item(pVal.FormUID)
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
 
             If pVal.ItemUID = "grd_DOC" Then
                 If pVal.ColUID = "DocEntry" Then
@@ -261,13 +251,13 @@ Public Class EXO_CVFAC
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
-    Private Function EventHandler_FORM_VISIBLE(ByRef pVal As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Private Function EventHandler_FORM_VISIBLE(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
 
         EventHandler_FORM_VISIBLE = False
 
         Try
-            oForm = SboApp.Forms.Item(pVal.FormUID)
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             If oForm.Visible = True Then
                 oForm.Items.Item("btn_Carga").Enabled = False
             End If
@@ -275,45 +265,45 @@ Public Class EXO_CVFAC
             EventHandler_FORM_VISIBLE = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
-    Private Function EventHandler_ItemPressed_After(ByRef pVal As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Private Function EventHandler_ItemPressed_After(ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sSQL As String = ""
         Dim oColumnTxt As SAPbouiCOM.EditTextColumn = Nothing
         Dim oColumnChk As SAPbouiCOM.CheckBoxColumn = Nothing
         Dim sTipoArchivo As String = ""
         Dim sArchivoOrigen As String = ""
-        Dim sArchivo As String = objGlobal.conexionSAP.pathHistorico & "\DOC_CARGADOS\" & objGlobal.conexionSAP.SBOApp.Company.DatabaseName & "\VENTAS\FACTURAS\"
+        Dim sArchivo As String = objGlobal.refDi.OGEN.pathGeneral & "\08.Historico\DOC_CARGADOS\" & objGlobal.SBOApp.Company.DatabaseName & "\VENTAS\FACTURAS\"
         Dim sNomFICH As String = ""
         EventHandler_ItemPressed_After = False
 
         Try
-        oForm = SboApp.Forms.Item(pVal.FormUID)
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
             'Comprobamos que exista el directorio y sino, lo creamos
             If System.IO.Directory.Exists(sArchivo) = False Then
                 System.IO.Directory.CreateDirectory(sArchivo)
             End If
             Select Case pVal.ItemUID
                 Case "btn_Carga"
-                    If SboApp.MessageBox("¿Está seguro que quiere generar los Documentos seleccionados?", 1, "Sí", "No") = 1 Then
+                    If objGlobal.SBOApp.MessageBox("¿Está seguro que quiere generar los Documentos seleccionados?", 1, "Sí", "No") = 1 Then
                         If ComprobarDOC(oForm, "DT_DOC") = True Then
                             oForm.Items.Item("btn_Carga").Enabled = False
                             'Generamos facturas
-                            SboApp.StatusBar.SetText("Creando Documentos ... Espere por favor.", SAPbouiCOM.BoMessageTime.bmt_Long, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            objGlobal.SBOApp.StatusBar.SetText("Creando Documentos ... Espere por favor.", SAPbouiCOM.BoMessageTime.bmt_Long, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                             oForm.Freeze(True)
-                            If EXO_GLOBALES.CrearDocumentos(oForm, "DT_DOC", "FACTURA", Company, SboApp, objGlobal) = False Then
+                            If EXO_GLOBALES.CrearDocumentos(oForm, "DT_DOC", "FACTURA", objGlobal.compañia, objGlobal.SBOApp, objGlobal) = False Then
                                 Exit Function
                             End If
                             oForm.Freeze(False)
-                            SboApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-                            SboApp.MessageBox("Fin del Proceso" & ChrW(10) & ChrW(13) & "Por favor, revise el Log para ver las operaciones realizadas.")
+                            objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+                            objGlobal.SBOApp.MessageBox("Fin del Proceso" & ChrW(10) & ChrW(13) & "Por favor, revise el Log para ver las operaciones realizadas.")
                             oForm.Items.Item("btn_Carga").Enabled = True
                         End If
                     End If
@@ -331,28 +321,29 @@ Public Class EXO_CVFAC
                                     Case "1" : sTipoArchivo = "Ficheros CSV|*.csv|Texto|*.txt"
                                     Case "2" : sTipoArchivo = "Libro de Excel|*.xlsx|Excel 97-2003|*.xls"
                                     Case Else
-                                        SboApp.StatusBar.SetText("(EXO) - Error inesperado. No ha encontrado el tipo de fichero a importar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Error inesperado. No ha encontrado el tipo de fichero a importar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                                         oForm.Items.Item("btn_Carga").Enabled = False
                                         Exit Function
                                 End Select
                             End If
                         End If
                         'Tenemos que controlar que es cliente o web
-                        If objGlobal.conexionSAP.SBOApp.ClientType = SAPbouiCOM.BoClientType.ct_Browser Then
-                            sArchivoOrigen = objGlobal.conexionSAP.SBOApp.GetFileFromBrowser() 'Modificar
+                        If objGlobal.SBOApp.ClientType = SAPbouiCOM.BoClientType.ct_Browser Then
+                            sArchivoOrigen = objGlobal.SBOApp.GetFileFromBrowser() 'Modificar
                         Else
                             'Controlar el tipo de fichero que vamos a abrir según campo de formato
-                            sArchivoOrigen = objGlobal.Functions.OpenDialogFiles("Abrir archivo como", sTipoArchivo)
+                            sArchivoOrigen = objGlobal.funciones.OpenDialogFiles("Abrir archivo como", sTipoArchivo)
                         End If
 
-                        If Len(sArchivoOrigen) = 0 Then
+                        If Len(sArchivoOrigen.Trim) = 0 Then
                             CType(oForm.Items.Item("txt_Fich").Specific, SAPbouiCOM.EditText).Value = ""
-                            SboApp.MessageBox("Debe indicar un archivo a importar.")
-                            SboApp.StatusBar.SetText("(EXO) - Debe indicar un archivo a importar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                            objGlobal.SBOApp.MessageBox("Debe indicar un archivo a importar.")
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Debe indicar un archivo a importar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
                             oForm.Items.Item("btn_Carga").Enabled = False
                             Exit Function
                         Else
+                            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Fichero: " & sArchivoOrigen, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                             CType(oForm.Items.Item("txt_Fich").Specific, SAPbouiCOM.EditText).Value = sArchivoOrigen
                             sNomFICH = IO.Path.GetFileName(sArchivoOrigen)
                             sArchivo = sArchivo & sNomFICH
@@ -363,8 +354,8 @@ Public Class EXO_CVFAC
                             oForm.Items.Item("btn_Carga").Enabled = True
                         End If
                     Else
-                        SboApp.MessageBox("No ha seleccionado el formato a importar." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione un formato de los que se ha creado en la parametrización.")
-                        SboApp.StatusBar.SetText("(EXO) - No ha seleccionado el formato a importar." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione un formato de los que se ha creado en la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                        objGlobal.SBOApp.MessageBox("No ha seleccionado el formato a importar." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione un formato de los que se ha creado en la parametrización.")
+                        objGlobal.SBOApp.StatusBar.SetText("(EXO) - No ha seleccionado el formato a importar." & ChrW(10) & ChrW(13) & " Antes de continuar Seleccione un formato de los que se ha creado en la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
                         CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Active = True
                     End If
             End Select
@@ -372,9 +363,9 @@ Public Class EXO_CVFAC
             EventHandler_ItemPressed_After = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw exCOM
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            Throw ex
         Finally
             oForm.Freeze(False)
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
@@ -385,26 +376,26 @@ Public Class EXO_CVFAC
     End Function
     Private Sub Limpiar_Grid(ByRef oForm As SAPbouiCOM.Form)
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Try
             oForm.Freeze(True)
             'Limpiamos grid
             'Borrar tablas temporales por usuario activo
-            sSQL = "DELETE FROM ""@EXO_TMPDOC"" where ""U_EXO_USR""='" & objGlobal.usuario & "'  "
+            sSQL = "DELETE FROM ""@EXO_TMPDOC"" where ""U_EXO_USR""='" & objGlobal.compañia.UserName & "'  "
             oRs.DoQuery(sSQL)
-            sSQL = "DELETE FROM ""@EXO_TMPDOCL"" where ""U_EXO_USR""='" & objGlobal.usuario & "'  "
+            sSQL = "DELETE FROM ""@EXO_TMPDOCL"" where ""U_EXO_USR""='" & objGlobal.compañia.UserName & "'  "
             oRs.DoQuery(sSQL)
-            sSQL = "DELETE FROM ""@EXO_TMPDOCLT"" where ""U_EXO_USR""='" & objGlobal.usuario & "'  "
+            sSQL = "DELETE FROM ""@EXO_TMPDOCLT"" where ""U_EXO_USR""='" & objGlobal.compañia.UserName & "'  "
             oRs.DoQuery(sSQL)
             'Ahora cargamos el Grid con los datos guardados
-            objGlobal.conexionSAP.SBOApp.StatusBar.SetText("Cargando Documentos en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+            objGlobal.SBOApp.StatusBar.SetText("Cargando Documentos en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
             sSQL = "SELECT 'Y' as ""Sel"",""Code"",""U_EXO_MODO"" as ""Modo"", '     ' as ""Estado"",""U_EXO_TIPOF"" As ""Tipo"",'      ' as ""DocEntry"", ""U_EXO_Serie"" as ""Serie"",""U_EXO_DOCNUM"" as ""Nº Documento"","
             sSQL &= " ""U_EXO_REF"" as ""Referencia"", ""U_EXO_MONEDA"" as ""Moneda"", ""U_EXO_COMER"" as ""Comercial"", ""U_EXO_CLISAP"" as ""Interlocutor SAP"", ""U_EXO_ADDID"" as ""Interlocutor Ext."", "
             sSQL &= " ""U_EXO_FCONT"" as ""F. Contable"", ""U_EXO_FDOC"" as ""F. Documento"", ""U_EXO_FVTO"" as ""F. Vto"", ""U_EXO_TDTO"" as ""T. Dto."", ""U_EXO_DTO"" as ""Dto."",  "
             sSQL &= " ""U_EXO_CPAGO"" as ""Vía Pago"", ""U_EXO_GROUPNUM"" as ""Cond. Pago"", ""U_EXO_COMENT"" as ""Comentario"", "
             sSQL &= " CAST('' as varchar(254)) as ""Descripción Estado"" "
             sSQL &= " From ""@EXO_TMPDOC"" "
-            sSQL &= " WHERE ""U_EXO_USR""='" & objGlobal.usuario & "' "
+            sSQL &= " WHERE ""U_EXO_USR""='" & objGlobal.compañia.UserName & "' "
             sSQL &= " ORDER BY ""U_EXO_MODO"", ""U_EXO_TIPOF"" "
             'Cargamos grid
             oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQL)
@@ -416,976 +407,56 @@ Public Class EXO_CVFAC
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
         End Try
     End Sub
-    '    Private Sub TratarFichero_Excel(ByVal sArchivo As String, ByRef oForm As SAPbouiCOM.Form)
-    '        Dim sSQL As String = ""
-    '        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
-    '        Dim oRCampos As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
-    '        Dim sCampo As String = ""
-
-    '        Dim iDoc As Integer = 0 'Contador de Cabecera de documentos
-    '        Dim sTFac As String = "" : Dim sTFacColumna As String = "" : Dim sTipoLineas As String = "" : Dim sTDoc As String = ""
-    '        Dim sCliente As String = "" : Dim sCliNombre As String = "" : Dim sCodCliente As String = "" : Dim sClienteColumna As String = "" : Dim sCodClienteColumna As String = ""
-    '        Dim sSerie As String = "" : Dim sDocNum As String = "" : Dim sManual As String = "" : Dim sSerieColumna As String = "" : Dim sDocNumColumna As String = ""
-    '        Dim sNumAtCard As String = "" : Dim sNumAtCardColumna As String = ""
-    '        Dim sMoneda As String = "" : Dim sMonedaColumna As String = ""
-    '        Dim sEmpleado As String = ""
-    '        Dim sFContable As String = "" : Dim sFDocumento As String = "" : Dim sFVto As String = "" : Dim sFDocumentoColumna As String = ""
-    '        Dim sTipoDto As String = "" : Dim sDto As String = ""
-    '        Dim sPeyMethod As String = "" : Dim sCondPago As String = ""
-    '        Dim sDirFac As String = "" : Dim sDirEnv As String = ""
-    '        Dim sComent As String = "" : Dim sComentCab As String = "" : Dim sComentPie As String = ""
-    '        Dim sCondicion As String = ""
-
-    '        Dim sExiste As String = ""
-    '        Dim iLinea As Integer = 0 : Dim sCodCampos As String = ""
-
-    '        Dim pck As ExcelPackage = Nothing
-    '        Dim iLin As Integer = 0
-    '        Try
-    '            ' miramos si existe el fichero y cargamos
-    '            If File.Exists(sArchivo) Then
-    '                Dim excel As New FileInfo(sArchivo)
-    '                pck = New ExcelPackage(excel)
-    '                Dim workbook = pck.Workbook
-    '                Dim worksheet = workbook.Worksheets.First()
-    '                sSQL = "SELECT ""U_EXO_FEXCEL"",""U_EXO_CSAP"",""U_EXO_TDOC"" FROM ""@EXO_CFCNF"" WHERE ""Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'"
-    '                oRs.DoQuery(sSQL)
-    '                If oRs.RecordCount > 0 Then
-    '                    iLin = oRs.Fields.Item("U_EXO_FEXCEL").Value
-    '                    sTDoc = oRs.Fields.Item("U_EXO_TDOC").Value
-    '                    If sTDoc = "1" Then
-    '                        sTDoc = "B"
-    '                    Else
-    '                        sTDoc = "F"
-    '                    End If
-    '                    sCodCampos = oRs.Fields.Item("U_EXO_CSAP").Value
-    '                    sSQL = "SELECT ""U_EXO_COD"",""U_EXO_OBL"" FROM ""@EXO_CSAPC"" WHERE ""Code""='" & sCodCampos & "'"
-    '                    oRCampos.DoQuery(sSQL)
-    '                    If oRCampos.RecordCount > 0 Then
-    '#Region "Matrix de Cabecera"
-    '                        Dim sCamposC(oRCampos.RecordCount, 3) As String
-    '                        For I = 1 To oRCampos.RecordCount
-    '                            sCamposC(I, 1) = oRCampos.Fields.Item("U_EXO_COD").Value.ToString
-    '                            sCamposC(I, 2) = oRCampos.Fields.Item("U_EXO_OBL").Value.ToString
-    '                            sCondicion = """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' and ""U_EXO_TIPO""='C' And ""U_EXO_COD""='" & oRCampos.Fields.Item("U_EXO_COD").Value.ToString & "' "
-    '                            sCampo = EXO_GLOBALES.GetValueDB(Company, """@EXO_FCCFL""", """U_EXO_posExcel""", sCondicion)
-    '                            If sCampo = "" And oRCampos.Fields.Item("U_EXO_OBL").Value.ToString = "Y" Then
-    '                                ' Si es obligatorio y no se ha indicado para leer hay que dar un error
-    '                                Dim sMensaje As String = "El campo """ & oRCampos.Fields.Item("U_EXO_COD").Value.ToString & """ no está asignado en la hoja de Excel y es obligatorio." & ChrW(13) & ChrW(10)
-    '                                sMensaje &= "Por favor, Revise la parametrización."
-    '                                SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                SboApp.MessageBox(sMensaje)
-    '                                Exit Sub
-    '                            End If
-    '                            sCamposC(I, 3) = sCampo
-    '                            Select Case oRCampos.Fields.Item("U_EXO_COD").Value.ToString
-    '                                Case "ObjType" : sTFacColumna = sCampo
-    '                                Case "CardCode" : sClienteColumna = sCampo
-    '                                Case "ADDID" : sCodClienteColumna = sCampo
-    '                                Case "Series" : sSerieColumna = sCampo
-    '                                Case "DocNum" : sDocNumColumna = sCampo
-    '                                Case "NumAtCard" : sNumAtCardColumna = sCampo
-    '                                Case "DocCurrency" : sMonedaColumna = sCampo
-    '                                Case "TaxDate" : sFDocumentoColumna = sCampo
-    '                            End Select
-    '                            oRCampos.MoveNext()
-    '                        Next
-    '#End Region
-    '                        Do
-    '#Region "Cabecera"
-    '                            If sTFac <> worksheet.Cells(sTFacColumna & iLin).Text Or sCliente <> worksheet.Cells(sClienteColumna & iLin).Text Or sCodCliente <> worksheet.Cells(sCodClienteColumna & iLin).Text _
-    '                                Or sSerie <> worksheet.Cells(sSerieColumna & iLin).Text Or sDocNum <> worksheet.Cells(sDocNumColumna & iLin).Text Or sNumAtCard <> worksheet.Cells(sNumAtCardColumna & iLin).Text _
-    '                                Or sMoneda <> worksheet.Cells(sMonedaColumna & iLin).Text Or sFDocumento <> worksheet.Cells(sFDocumentoColumna & iLin).Text Then
-    '                                'Grabamos la cabecera
-    '                                For C = 1 To sCamposC.GetUpperBound(0)
-    '                                    Select Case sCamposC(C, 1)
-    '                                        Case "ObjType"
-    '#Region "ObjType"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sTFac = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    If worksheet.Cells("A" & iLin).Text <> "" Then
-    '                                                        Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                        sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                        SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                        SboApp.MessageBox(sMensaje)
-    '                                                        Exit Sub
-    '                                                    Else
-    '                                                        Exit Do
-    '                                                    End If
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sTFac = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "DocType"
-    '#Region "DocType"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sTipoLineas = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sTipoLineas = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "CardCode"
-    '#Region "CardCode"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sCliente = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    'SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sCliente = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "CardName"
-    '#Region "CardName"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sCliNombre = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sCliNombre = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "ADDID"
-    '#Region "ADDID"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sCodCliente = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    'SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sCodCliente = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "NumAtCard"
-    '#Region "NumAtCard"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sNumAtCard = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sNumAtCard = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "EXO_Manual"
-    '#Region "EXO_Manual"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sManual = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sManual = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "Series"
-    '#Region "Series"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sSerie = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sSerie = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "DocNum"
-    '#Region "DocNum"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sDocNum = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sDocNum = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "DocCurrency"
-    '#Region "DocCurrency"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sMoneda = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sMoneda = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "SlpCode"
-    '#Region "SlpCode"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sEmpleado = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sEmpleado = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "DocDate"
-    '#Region "DocDate"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sFContable = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                    If sFContable <> "" Then
-    '                                                        sFContable = Year(sFContable).ToString("0000") & Month(sFContable).ToString("00") & Day(sFContable).ToString("00")
-    '                                                    End If
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sFContable = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                    If sFContable <> "" Then
-    '                                                        sFContable = Year(sFContable).ToString("0000") & Month(sFContable).ToString("00") & Day(sFContable).ToString("00")
-    '                                                    End If
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "TaxDate"
-    '#Region "TaxDate"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sFDocumento = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                    If sFDocumento <> "" Then
-    '                                                        sFDocumento = Year(sFDocumento).ToString("0000") & Month(sFDocumento).ToString("00") & Day(sFDocumento).ToString("00")
-    '                                                    End If
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sFDocumento = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                    If sFDocumento <> "" Then
-    '                                                        sFDocumento = Year(sFDocumento).ToString("0000") & Month(sFDocumento).ToString("00") & Day(sFDocumento).ToString("00")
-    '                                                    End If
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "DocDueDate"
-    '#Region "DocDueDate"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sFVto = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                    If sFVto <> "" Then
-    '                                                        sFVto = Year(sFVto).ToString("0000") & Month(sFVto).ToString("00") & Day(sFVto).ToString("00")
-    '                                                    End If
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sFVto = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                    If sFVto <> "" Then
-    '                                                        sFVto = Year(sFVto).ToString("0000") & Month(sFVto).ToString("00") & Day(sFVto).ToString("00")
-    '                                                    End If
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "EXO_TDTO"
-    '#Region "EXO_TDTO"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sTipoDto = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sTipoDto = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "EXO_DTO"
-    '#Region "EXO_DTO"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sDto = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sDto = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "PeyMethod"
-    '#Region "PeyMethod"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sPeyMethod = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sPeyMethod = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "GroupNum"
-    '#Region "GroupNum"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sCondPago = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sCondPago = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "PayToCode"
-    '#Region "PayToCode"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sDirFac = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sDirFac = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "ShipToCode"
-    '#Region "ShipToCode"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sDirEnv = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sDirEnv = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "Comments"
-    '#Region "Comments"
-    '                                            Dim iPosicion As Integer = InStr(sArchivo, "08.Historico")
-    '                                            Dim sMiDir As String = Mid(sArchivo, iposicion)
-    '                                            sComent = "Importado a través del fichero - " & sMiDir & " - "
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sComent &= worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sComent &= worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "OpeningRemarks"
-    '#Region "OpeningRemarks"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sComentCab = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sComentCab = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "ClosingRemarks"
-    '#Region "ClosingRemarks"
-    '                                            If sCamposC(C, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sComentPie = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposC(C, 1) & """ es obligatorio y la columna """ & sCamposC(C, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposC(C, 3) & iLin).Text <> "" Then
-    '                                                    sComentPie = worksheet.Cells(sCamposC(C, 3) & iLin).Text
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                    End Select
-    '                                Next
-    '                                'Grabamos la cabecera
-    '                                iLinea = 0
-    '                                If sTFac = "" Then
-    '                                    sTFac = Left(sCliente, 2)
-    '                                End If
-    '                                Dim sExisteIC As String = ""
-    '                                Select Case Left(sCodCliente, 2)
-    '                                    Case "43"
-    '                                        sCliente = "C" & Mid(sCodCliente, 4)
-    '                                        sExisteIC = EXO_GLOBALES.GetValueDB(objGlobal.conexionSAP.compañia, """OCRD""", """CardCode""", """CardCode""='" & sCliente & "'")
-    '                                        If sExisteIC = "" Then
-    '                                            sExisteIC = EXO_GLOBALES.GetValueDB(objGlobal.conexionSAP.compañia, """OCRD""", """CardCode""", """AddID""='" & sCodCliente & "'")
-    '                                            sCliente = sExisteIC
-    '                                        Else
-    '                                            sCliente = sExisteIC
-    '                                        End If
-    '                                    Case "40"
-    '                                        sCliente = "P" & Mid(sCodCliente, 4)
-    '                                        sExisteIC = EXO_GLOBALES.GetValueDB(objGlobal.conexionSAP.compañia, """OCRD""", """CardCode""", """CardCode""='" & sCliente & "'")
-    '                                        If sExisteIC = "" Then
-    '                                            sExisteIC = EXO_GLOBALES.GetValueDB(objGlobal.conexionSAP.compañia, """OCRD""", """CardCode""", """AddID""='" & sCodCliente & "'")
-    '                                            sCliente = sExisteIC
-    '                                        Else
-    '                                            sCliente = sExisteIC
-    '                                        End If
-    '                                End Select
-    '                                'Insertar en la tabla temporal la cabecera
-    '                                If sTFac <> "" Then
-    '                                    iDoc += 1
-    '                                    sSQL = "insert into ""@EXO_TMPDOC"" values('" & iDoc.ToString & "','" & iDoc.ToString & "'," & iDoc.ToString & ",'N','',0," & objGlobal.conexionSAP.compañia.UserSignature
-    '                                    sSQL &= ",'','',0,'',0,'','" & objGlobal.usuario & "',"
-    '                                    sSQL &= "'" & sTDoc & "','" & sDocNum & "','" & sTFac & "','" & sManual & "','" & sSerie & "','" & sNumAtCard & "','" & sMoneda & "','','" & sEmpleado & "',"
-    '                                    sSQL &= "'" & sCliente & "','" & sCodCliente & "','" & sFContable & "','" & sFDocumento & "','" & sFVto & "','" & sTipoDto & "',"
-    '                                    sSQL &= EXO_GLOBALES.DblNumberToText(objGlobal, sDto.ToString) & ",'" & sPeyMethod & "','" & sDirFac & "','" & sDirEnv & "','" & sComent.Replace("'", "") & "','"
-    '                                    sSQL &= sComentCab.Replace("'", "") & "','" & sComentPie.Replace("'", "") & "','" & sCondPago & "') "
-    '                                    oRs.DoQuery(sSQL)
-    '                                End If
-    '                            End If
-    '#End Region
-    '                            'Ahora tratamos la línea
-    '#Region "Líneas"
-    '                            Dim sCuenta As String = "" : Dim sArt As String = "" : Dim sArtDes As String = ""
-    '                            Dim sCantidad As String = "0.00" : Dim sprecio As String = "0.00" : Dim sDtoLin As String = "0.00" : Dim sTotalServicios As String = "0.00" : Dim sPrecioBruto As String = "0.00"
-    '                            Dim sTextoAmpliado As String = "" : Dim sLinImpuestoCod As String = "" : Dim sLinRetCodigo As String = ""
-    '                            sSQL = "SELECT ""U_EXO_COD"",""U_EXO_OBL"" FROM ""@EXO_CSAPL"" WHERE ""Code""='" & sCodCampos & "'"
-    '                            oRCampos.DoQuery(sSQL)
-    '                            If oRCampos.RecordCount > 0 Then
-    '#Region "Matrix de Líneas"
-    '                                Dim sCamposL(oRCampos.RecordCount, 3) As String
-    '                                For I = 1 To oRCampos.RecordCount
-    '                                    sCamposL(I, 1) = oRCampos.Fields.Item("U_EXO_COD").Value.ToString
-    '                                    sCamposL(I, 2) = oRCampos.Fields.Item("U_EXO_OBL").Value.ToString
-    '                                    sCondicion = """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "' and ""U_EXO_TIPO""='L' And ""U_EXO_COD""='" & oRCampos.Fields.Item("U_EXO_COD").Value.ToString & "' "
-    '                                    sCampo = EXO_GLOBALES.GetValueDB(Company, """@EXO_FCCFL""", """U_EXO_posExcel""", sCondicion)
-    '                                    If sCampo = "" And oRCampos.Fields.Item("U_EXO_OBL").Value.ToString = "Y" Then
-    '                                        ' Si es obligatorio y no se ha indicado para leer hay que dar un error
-    '                                        Dim sMensaje As String = "El campo """ & oRCampos.Fields.Item("U_EXO_COD").Value.ToString & """ no está asignado en la hoja de Excel y es obligatorio." & ChrW(13) & ChrW(10)
-    '                                        sMensaje &= "Por favor, Revise la parametrización."
-    '                                        SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                        SboApp.MessageBox(sMensaje)
-    '                                        Exit Sub
-    '                                    End If
-    '                                    sCamposL(I, 3) = sCampo
-    '                                    oRCampos.MoveNext()
-    '                                Next
-    '#End Region
-    '                                For L = 1 To sCamposL.GetUpperBound(0)
-    '                                    Select Case sCamposL(L, 1)
-    '                                        Case "AcctCode"
-    '#Region "AcctCode"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sCuenta = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sCuenta = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sCuenta = ""
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "ItemCode"
-    '#Region "ItemCode"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sArt = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sArt = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sArt = ""
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "Dscription"
-    '#Region "Dscription"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sArtDes = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sArtDes = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sArtDes = ""
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "Quantity"
-    '#Region "Quantity"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sCantidad = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sCantidad = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sCantidad = "0.00"
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "UnitPrice"
-    '#Region "UnitPrice"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sprecio = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sprecio = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sprecio = "0.00"
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "DiscPrcnt"
-    '#Region "DiscPrcnt"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sDtoLin = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sDtoLin = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sDtoLin = "0.00"
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "EXO_IMPSRV"
-    '#Region "EXO_IMPSRV"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    Dim sLet1 As String = sCamposL(L, 3) : Dim iLet1 As Integer = Asc(sLet1) + 1 : sLet1 = ChrW(iLet1)
-    '                                                    Dim sLet2 As String = sCamposL(L, 3) : Dim iLet2 As Integer = Asc(sLet2) + 2 : sLet2 = ChrW(iLet2)
-    '                                                    sTotalServicios = (CDbl(worksheet.Cells(sCamposL(L, 3) & iLin).Text) + CDbl(worksheet.Cells(sLet1 & iLin).Text) + CDbl(worksheet.Cells(sLet2 & iLin).Text)).ToString.Replace(",", ".")
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    Dim sLet1 As String = sCamposL(L, 3) : Dim iLet1 As Integer = Asc(sLet1) + 1 : sLet1 = ChrW(iLet1)
-    '                                                    Dim sLet2 As String = sCamposL(L, 3) : Dim iLet2 As Integer = Asc(sLet2) + 2 : sLet2 = ChrW(iLet2)
-    '                                                    sTotalServicios = (CDbl(worksheet.Cells(sCamposL(L, 3) & iLin).Text) + CDbl(worksheet.Cells(sLet1 & iLin).Text) + CDbl(worksheet.Cells(sLet2 & iLin).Text)).ToString.Replace(",", ".")
-    '                                                Else
-    '                                                    sTotalServicios = "0.00"
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "EXO_TextoLin"
-    '#Region "EXO_TextoLin"
-
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sTextoAmpliado = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sTextoAmpliado = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sTextoAmpliado = ""
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "EXO_IMP"
-    '#Region "EXO_IMP"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sLinImpuestoCod = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sLinImpuestoCod = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sLinImpuestoCod = ""
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "EXO_RET"
-    '#Region "EXO_RET"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sLinRetCodigo = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sLinRetCodigo = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sLinRetCodigo = ""
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                        Case "GrossBuyPr"
-    '#Region "GrossBuyPr"
-    '                                            If sCamposL(L, 2) = "Y" Then
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sPrecioBruto = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    Dim sMensaje As String = "El campo """ & sCamposL(L, 1) & """ es obligatorio y la columna """ & sCamposL(L, 3) & """ está vacía." & ChrW(13) & ChrW(10)
-    '                                                    sMensaje &= "Por favor, Revise el documento Excel."
-    '                                                    SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                                    SboApp.MessageBox(sMensaje)
-    '                                                    Exit Sub
-    '                                                End If
-    '                                            Else
-    '                                                If worksheet.Cells(sCamposL(L, 3) & iLin).Text <> "" Then
-    '                                                    sPrecioBruto = worksheet.Cells(sCamposL(L, 3) & iLin).Text
-    '                                                Else
-    '                                                    sPrecioBruto = "0.00"
-    '                                                End If
-    '                                            End If
-    '#End Region
-    '                                    End Select
-    '                                Next
-    '#Region "Comprobar datos línea"
-    '                                'Comprobamos que exista la cuenta
-    '                                If sCuenta <> "" Then
-    '                                    sExiste = ""
-    '                                    sExiste = EXO_GLOBALES.GetValueDB(objGlobal.conexionSAP.compañia, """OACT""", """AcctCode""", """AcctCode""='" & sCuenta & "'")
-    '                                    If sExiste = "" Then
-    '                                        SboApp.StatusBar.SetText("(EXO) - La Cuenta contable SAP  - " & sCuenta & " - no existe.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                        SboApp.MessageBox("La Cuenta contable SAP - " & sCuenta & " - no existe.")
-    '                                        Exit Sub
-    '                                    End If
-    '                                End If
-    '                                If sTipoLineas = "" And sArt = "" Then
-    '                                    sTipoLineas = "S" ' En el caso de no estar indicado, se ha tomado como que son líneas de servicio
-    '                                ElseIf sArt <> "" Then
-    '                                    sTipoLineas = "I" ' En el caso de no estar indicado, se ha tomado como que son líneas de artículos
-    '                                End If
-    '                                'Comprobamos que exista el artículo
-    '                                If sTipoLineas = "I" Then
-    '                                    sExiste = ""
-    '                                    sExiste = EXO_GLOBALES.GetValueDB(objGlobal.conexionSAP.compañia, """OITM""", """ItemCode""", """ItemCode"" like '" & sArt & "'")
-    '                                    If sExiste = "" Then
-    '                                        SboApp.StatusBar.SetText("(EXO) - El Artículo - " & sArt & " - " & sArtDes & " no existe. Borrelo de la sección concepto para poderlo crear automáticamente.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                        SboApp.MessageBox("El Artículo - " & sArt & " - " & sArtDes & " no existe. Borrelo de la sección concepto para poderlo crear automáticamente.")
-    '                                        Exit Sub
-    '                                    End If
-    '                                ElseIf sTipoLineas = "S" Then
-    '                                    If sCuenta = "" Then
-    '                                        ' No puede estar la cuenta vacía si es de tipo servicio
-    '                                        'Dim sMensaje As String = " La cuenta esta vacía. Se coge los datos por defecto."
-    '                                        'SboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-    '                                        sCuenta = EXO_GLOBALES.GetValueDB(objGlobal.conexionSAP.compañia, """@EXO_CFCNF""", """U_EXO_CSRV""", """Code""='" & CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).Selected.Value.ToString & "'")
-    '                                    End If
-    '                                End If
-    '                                'Comprobamos que exista el impuesto si está relleno
-    '                                If sLinImpuestoCod <> "" Then
-    '                                    sExiste = ""
-    '                                    sExiste = EXO_GLOBALES.GetValueDB(objGlobal.conexionSAP.compañia, """OVTG""", """Code""", """Code""='" & sLinImpuestoCod & "'")
-    '                                    If sExiste = "" Then
-    '                                        SboApp.StatusBar.SetText("(EXO) - El Grupo Impositivo  - " & sLinImpuestoCod & " - no existe.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                        SboApp.MessageBox("El Grupo Impositivo  - " & sLinImpuestoCod & " - no existe.")
-    '                                        Exit Sub
-    '                                    End If
-    '                                End If
-    '                                'Comprobamos que exista la retención si está relleno
-    '                                If sLinRetCodigo <> "" Then
-    '                                    sExiste = EXO_GLOBALES.GetValueDB(objGlobal.conexionSAP.compañia, """CRD4""", """WTCode""", """CardCode""='" & sCliente & "' and ""WTCode""='" & sLinRetCodigo & "'")
-    '                                    If sExiste = "" Then
-    '                                        SboApp.StatusBar.SetText("(EXO) - El indicador de Retención  - " & sLinRetCodigo & " - no no está marcado para el interlocutor " & sCliente & ". Por favor, revise el interlocutor.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                                        SboApp.MessageBox("El indicador de Retención  - " & sLinRetCodigo & " - no no está marcado para el interlocutor " & sCliente & ". Por favor, revise el interlocutor.")
-    '                                        Exit Sub
-    '                                    End If
-    '                                End If
-    '#End Region
-    '                                'Grabamos la línea
-    '                                If EXO_GLOBALES.DblNumberToText(objGlobal, sTotalServicios.ToString) > 0 Then
-    '                                    'Actualizamos la cabecera para que sea factura
-    '                                    sSQL = "UPDATE ""@EXO_TMPDOC"" SET ""U_EXO_TIPOF""='13' Where ""Code""='" & iDoc.ToString & "' "
-    '                                    oRs.DoQuery(sSQL)
-    '                                Else
-    '                                    'Actualizamos la cabecera para que sea Abono
-    '                                    sSQL = "UPDATE ""@EXO_TMPDOC"" SET ""U_EXO_TIPOF""='14' Where ""Code""='" & iDoc.ToString & "' "
-    '                                    oRs.DoQuery(sSQL)
-    '                                    'Actualizamos el importe
-    '                                    sTotalServicios = sTotalServicios.Replace("-", "")
-    '                                End If
-    '                                If sTipoLineas = "S" Then
-    '                                    'Escribimos el texto para el servicio
-    '                                    sTextoAmpliado = "FACTURA SERVICIO"
-    '                                End If
-    '                                sSQL = "insert into ""@EXO_TMPDOCL"" values('" & iDoc.ToString & "','" & iLinea & "','',0,'" & objGlobal.usuario & "',"
-    '                                sSQL &= "'" & sCuenta & "','" & sArt & "','" & sArtDes & "'," & EXO_GLOBALES.DblNumberToText(objGlobal, sCantidad.ToString).Replace(",", ".") & ","
-    '                                sSQL &= EXO_GLOBALES.DblNumberToText(objGlobal, sprecio.ToString) & "," & EXO_GLOBALES.DblNumberToText(objGlobal, sDtoLin.ToString)
-    '                                sSQL &= "," & EXO_GLOBALES.DblNumberToText(objGlobal, sTotalServicios.ToString).Replace(",", ".") & ",'" & sLinImpuestoCod & "','" & sLinRetCodigo & "','"
-    '                                sSQL &= sTextoAmpliado & "','" & sTipoLineas & "'," & sPrecioBruto & " ) "
-    '                                oRs.DoQuery(sSQL)
-    '                                iLin += 1 : iLinea += 1
-    '                            End If
-    '#End Region
-    '                        Loop While sTFac <> ""
-    '                    End If
-
-
-    '                Else
-    '                    SboApp.StatusBar.SetText("(EXO) - Error inesperado. No se ha encontrado la configuración de lectura del fichero de excel. No se puede cargar el fichero.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                    SboApp.MessageBox("Error inesperado. No se ha encontrado la configuración de lectura del fichero de excel. No se puede cargar el fichero.")
-    '                End If
-    '            Else
-    '                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("No se ha encontrado el fichero excel a cargar.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-    '                Exit Sub
-    '            End If
-
-
-    '        Catch exCOM As System.Runtime.InteropServices.COMException
-    '            Throw exCOM
-    '        Catch ex As Exception
-    '            Throw ex
-    '        Finally
-    '            pck.Dispose()
-    '            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
-    '            EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRCampos, Object))
-    '        End Try
-    '    End Sub
     Private Sub TratarFichero(ByVal sArchivo As String, ByVal sTipoArchivo As String, ByRef oForm As SAPbouiCOM.Form)
         Dim myStream As StreamReader = Nothing
         Dim Reader As XmlTextReader = New XmlTextReader(myStream)
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sExiste As String = "" ' Para comprobar si existen los datos
         Dim sDelimitador As String = ""
         Try
-            SboApp.StatusBar.SetText("Cargando datos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("Cargando datos...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             sSQL = "Select ""U_EXO_STXT"" FROM ""@EXO_CFCNF""  WHERE ""Code""='" & sTipoArchivo & "'"
-            sDelimitador = objGlobal.SQL.sqlStringB1(sSQL)
+            sDelimitador = objGlobal.refDi.SQL.sqlStringB1(sSQL)
 
             sSQL = "Select ""U_EXO_TEXP"" FROM ""@EXO_CFCNF""  WHERE ""Code""='" & sTipoArchivo & "'"
-            sTipoArchivo = objGlobal.SQL.sqlStringB1(sSQL)
+            sTipoArchivo = objGlobal.refDi.SQL.sqlStringB1(sSQL)
 
             Select Case sTipoArchivo
                 Case "1"
 #Region "TXT|CSV"
-                    EXO_GLOBALES.TratarFichero_TXT(sArchivo, sDelimitador, oForm, Company, SboApp, objGlobal)
+                    EXO_GLOBALES.TratarFichero_TXT(sArchivo, sDelimitador, oForm, objGlobal.compañia, objGlobal.SBOApp, objGlobal)
+                    EXO_GLOBALES.ActualizaNumATCard(objGlobal.compañia, objGlobal)
 #End Region
                 Case "2"
 #Region "EXCEL"
-                    EXO_GLOBALES.TratarFichero_Excel(sArchivo, oForm, Company, SboApp, objGlobal)
+                    EXO_GLOBALES.TratarFichero_Excel(sArchivo, oForm, objGlobal.compañia, objGlobal.SBOApp, objGlobal)
 #End Region
                 Case Else
-                    SboApp.StatusBar.SetText("(EXO) -El tipo de fichero a importar no está contemplado. Avise a su Administrador.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
-                    SboApp.MessageBox("El tipo de fichero a importar no está contemplado. Avise a su Administrador.")
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) -El tipo de fichero a importar no está contemplado. Avise a su Administrador.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                    objGlobal.SBOApp.MessageBox("El tipo de fichero a importar no está contemplado. Avise a su Administrador.")
                     Exit Sub
             End Select
-            SboApp.StatusBar.SetText("(EXO) - Se ha leido correctamente el fichero.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Se ha leido correctamente el fichero.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
 
 #Region "cargar Grid con los datos leidos"
             'Ahora cargamos el Grid con los datos guardados
-            objGlobal.conexionSAP.SBOApp.StatusBar.SetText("Cargando Documentos en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+            objGlobal.SBOApp.StatusBar.SetText("Cargando Documentos en pantalla ... Espere por favor", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
             sSQL = "SELECT 'Y' as ""Sel"",""Code"",""U_EXO_MODO"" as ""Modo"", '     ' as ""Estado"",""U_EXO_TIPOF"" As ""Tipo"",'      ' as ""DocEntry"",""U_EXO_Serie"" as ""Serie"",""U_EXO_DOCNUM"" as ""Nº Documento"","
             sSQL &= " ""U_EXO_REF"" as ""Referencia"", ""U_EXO_MONEDA"" as ""Moneda"", ""U_EXO_COMER"" as ""Comercial"", ""U_EXO_CLISAP"" as ""Interlocutor SAP"", ""U_EXO_ADDID"" as ""Interlocutor Ext."", "
             sSQL &= " ""U_EXO_FCONT"" as ""F. Contable"", ""U_EXO_FDOC"" as ""F. Documento"", ""U_EXO_FVTO"" as ""F. Vto"", ""U_EXO_TDTO"" as ""T. Dto."", ""U_EXO_DTO"" as ""Dto."",  "
             sSQL &= " ""U_EXO_CPAGO"" as ""Vía Pago"", ""U_EXO_GROUPNUM"" as ""Cond. Pago"", ""U_EXO_COMENT"" as ""Comentario"", "
             sSQL &= " CAST('' as varchar(254)) as ""Descripción Estado"" "
             sSQL &= " From ""@EXO_TMPDOC"" "
-            sSQL &= " WHERE ""U_EXO_USR""='" & objGlobal.usuario & "' "
+            sSQL &= " WHERE ""U_EXO_USR""='" & objGlobal.compañia.UserName & "' "
             sSQL &= " ORDER BY ""U_EXO_MODO"", ""U_EXO_TIPOF"" "
             'Cargamos grid
             oForm.DataSources.DataTables.Item("DT_DOC").ExecuteQuery(sSQL)
             FormateaGrid(oForm)
 #End Region
             oForm.Freeze(True)
-            SboApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
-            SboApp.MessageBox("Se ha leido correctamente el fichero. Fin del proceso")
+            objGlobal.SBOApp.StatusBar.SetText("Fin del proceso.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.MessageBox("Se ha leido correctamente el fichero. Fin del proceso")
         Catch exCOM As System.Runtime.InteropServices.COMException
             Throw exCOM
         Catch ex As Exception
@@ -1403,7 +474,7 @@ Public Class EXO_CVFAC
         Dim oColumnChk As SAPbouiCOM.CheckBoxColumn = Nothing
         Dim oColumnCb As SAPbouiCOM.ComboBoxColumn = Nothing
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Try
             oform.Freeze(True)
             CType(oform.Items.Item("grd_DOC").Specific, SAPbouiCOM.Grid).Columns.Item(0).Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox
@@ -1496,8 +567,8 @@ Public Class EXO_CVFAC
             IO.File.Delete(sArchivo)
         End If
         'Subimos el archivo
-        SboApp.StatusBar.SetText("(EXO) - Comienza la Copia de seguridad del fichero - " & sArchivoOrigen & " -.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-        If objGlobal.conexionSAP.SBOApp.ClientType = BoClientType.ct_Browser Then
+        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Comienza la Copia de seguridad del fichero - " & sArchivoOrigen & " -.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+        If objGlobal.SBOApp.ClientType = BoClientType.ct_Browser Then
             Dim fs As FileStream = New FileStream(sArchivoOrigen, FileMode.Open, FileAccess.Read)
             Dim b(CInt(fs.Length() - 1)) As Byte
             fs.Read(b, 0, b.Length)
@@ -1508,16 +579,16 @@ Public Class EXO_CVFAC
         Else
             My.Computer.FileSystem.CopyFile(sArchivoOrigen, sArchivo)
         End If
-        SboApp.StatusBar.SetText("(EXO) - Copia de Seguridad realizada Correctamente", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+        objGlobal.SBOApp.StatusBar.SetText("(EXO) - Copia de Seguridad realizada Correctamente", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
     End Sub
     Private Function CargaComboFormato(ByRef oForm As SAPbouiCOM.Form) As Boolean
 
         CargaComboFormato = False
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Try
             oForm.Freeze(True)
-            If objGlobal.conexionSAP.compañia.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB Then
+            If objGlobal.compañia.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB Then
                 sSQL = "(Select '--' as ""Code"",' ' as ""Name"" FROM ""DUMMY"") "
                 sSQL &= " UNION ALL "
                 sSQL &= " (Select ""Code"",""Name"" FROM ""@EXO_CFCNF"" Order by ""Name"") "
@@ -1531,9 +602,9 @@ Public Class EXO_CVFAC
 
             oRs.DoQuery(sSQL)
             If oRs.RecordCount > 0 Then
-                objGlobal.conexionSAP.refSBOApp.cargaCombo(CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
+                objGlobal.funcionesUI.cargaCombo(CType(oForm.Items.Item("cb_Format").Specific, SAPbouiCOM.ComboBox).ValidValues, sSQL)
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Por favor, antes de continuar, revise la parametrización.", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Error)
             End If
             CargaComboFormato = True
 
@@ -1560,7 +631,7 @@ Public Class EXO_CVFAC
             Next
 
             If bLineasSel = False Then
-                SboApp.MessageBox("Debe seleccionar al menos una línea.")
+                objGlobal.SBOApp.MessageBox("Debe seleccionar al menos una línea.")
                 Exit Function
             End If
 

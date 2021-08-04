@@ -2,9 +2,9 @@
 Imports SAPbouiCOM
 
 Public Class EXO_CFRP
-    Inherits EXO_Generales.EXO_DLLBase
-    Public Sub New(ByRef general As EXO_Generales.EXO_General, ByRef actualizar As Boolean)
-        MyBase.New(general, actualizar)
+    Inherits EXO_UIAPI.EXO_DLLBase
+    Public Sub New(ByRef oObjGlobal As EXO_UIAPI.EXO_UIAPI, ByRef actualizar As Boolean, usaLicencia As Boolean, idAddOn As Integer)
+        MyBase.New(oObjGlobal, actualizar, False, idAddOn)
         cargamenu()
         If actualizar Then
             cargaCampos()
@@ -15,35 +15,35 @@ Public Class EXO_CFRP
     End Function
     Private Sub cargamenu()
         Dim Path As String = ""
-        Dim menuXML As String = objGlobal.Functions.leerEmbebido(Me.GetType(), "XML_MENU.xml")
-        SboApp.LoadBatchActions(menuXML)
-        Dim res As String = SboApp.GetLastBatchResults
-
-        If SboApp.Menus.Exists("EXO-MnCDoc") = True Then
-            Path = objGlobal.conexionSAP.path & "\02.Menus"
+        Dim menuXML As String = objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_MENU.xml")
+        objGlobal.SBOApp.LoadBatchActions(menuXML)
+        Dim res As String = objGlobal.SBOApp.GetLastBatchResults
+        Path = objGlobal.refDi.OGEN.pathGeneral.ToString.Trim
+        If objGlobal.SBOApp.Menus.Exists("EXO-MnCDoc") = True Then
+            Path &= "\02.Menus"
             If Path <> "" Then
                 If IO.File.Exists(Path & "\MnCDOC.png") = True Then
-                    SboApp.Menus.Item("EXO-MnCDoc").Image = Path & "\MnCDOC.png"
+                    objGlobal.SBOApp.Menus.Item("EXO-MnCDoc").Image = Path & "\MnCDOC.png"
                 End If
             End If
         End If
     End Sub
     Public Overrides Function filtros() As EventFilters
         Dim filtrosXML As Xml.XmlDocument = New Xml.XmlDocument
-        filtrosXML.LoadXml(objGlobal.Functions.leerEmbebido(Me.GetType(), "XML_FILTROS.xml"))
+        filtrosXML.LoadXml(objGlobal.funciones.leerEmbebido(Me.GetType(), "XML_FILTROS.xml"))
         Dim filtro As SAPbouiCOM.EventFilters = New SAPbouiCOM.EventFilters()
         filtro.LoadFromXML(filtrosXML.OuterXml)
 
         Return filtro
     End Function
     Private Sub cargaCampos()
-        If objGlobal.conexionSAP.esAdministrador Then
+        If objGlobal.refDi.comunes.esAdministrador Then
             Dim oXML As String = ""
             Dim udoObj As EXO_Generales.EXO_UDO = Nothing
             'MnCFRP
-            oXML = objGlobal.Functions.leerEmbebido(Me.GetType(), "UDO_EXO_CSAP.xml")
-            objGlobal.conexionSAP.LoadBDFromXML(oXML)
-            objGlobal.conexionSAP.SBOApp.StatusBar.SetText("Validado: UDO_EXO_CSAP", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            oXML = objGlobal.funciones.leerEmbebido(Me.GetType(), "UDO_EXO_CSAP.xml")
+            objGlobal.refDi.comunes.LoadBDFromXML(oXML)
+            objGlobal.SBOApp.StatusBar.SetText("Validado: UDO_EXO_CSAP", SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             'Introducir los datos
             CargarDatos()
         End If
@@ -51,13 +51,13 @@ Public Class EXO_CFRP
     Private Function CargarDatos() As Boolean
         CargarDatos = False
         Dim sSQL As String = ""
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
-        Dim oRsCCC As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRsCCC As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sPeriodo As String = ""
         Dim sFPoder As String = ""
         Dim oDI_COM As EXO_DIAPI.EXO_UDOEntity = Nothing 'Instancia del UDO para Insertar datos
         Try
-            oDI_COM = New EXO_DIAPI.EXO_UDOEntity(objGlobal.conexionSAP.refCompañia, "EXO_CSAP") 'UDO de Campos de SAP
+            oDI_COM = New EXO_DIAPI.EXO_UDOEntity(objGlobal.refDi.comunes, "EXO_CSAP") 'UDO de Campos de SAP
 #Region "CAMPOSSAP"
             sSQL = "SELECT * FROM ""@EXO_CSAP"" WHERE ""Code""='CAMPOSSAP' "
             oRs.DoQuery(sSQL)
@@ -68,21 +68,21 @@ Public Class EXO_CFRP
                 sSQL = "SELECT * FROM ""@EXO_CSAPC"" WHERE ""Code""='CAMPOSSAP' "
                 oRs.DoQuery(sSQL)
                 If oRs.RecordCount = 0 Then
-                    objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Cabecera Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Cabecera Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                     CrearCamposCabecera(oDI_COM, "CAMPOSSAP")
                 End If
                 'Comprobamos que existan campos en las líneas
                 sSQL = "SELECT * FROM ""@EXO_CSAPL"" WHERE ""Code""='CAMPOSSAP' "
                 oRs.DoQuery(sSQL)
                 If oRs.RecordCount = 0 Then
-                    objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Líneas Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Líneas Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                     CrearCamposLíneas(oDI_COM, "CAMPOSSAP")
                 End If
                 If oDI_COM.UDO_Update = False Then
                     Throw New Exception("(EXO) - " & oDI_COM.GetLastError)
                 End If
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tablas Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tablas Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
                 oDI_COM.GetNew()
                 oDI_COM.SetValue("Code") = "CAMPOSSAP"
@@ -92,36 +92,6 @@ Public Class EXO_CFRP
                 CrearCamposLíneas(oDI_COM, "CAMPOSSAP")
                 If oDI_COM.UDO_Add = False Then
                     Throw New Exception("(EXO) - Error al añadir campos SAP. " & oDI_COM.GetLastError)
-                End If
-            End If
-#End Region
-#Region "CAMPOSSAPIC"
-            sSQL = "SELECT * FROM ""@EXO_CSAP"" WHERE ""Code""='CAMPOSSAPIC' "
-            oRs.DoQuery(sSQL)
-            If oRs.RecordCount > 0 Then
-                Dim sCode As String = oRs.Fields.Item("Code").Value.ToString
-                oDI_COM.GetByKey(sCode)
-                'Comprobamos que existan campos en la tabla de la cabecera
-                sSQL = "SELECT * FROM ""@EXO_CSAPC"" WHERE ""Code""='CAMPOSSAPIC' "
-                oRs.DoQuery(sSQL)
-                If oRs.RecordCount = 0 Then
-                    objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Cabecera Campos SAP IC...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-                    CrearCamposCabeceraIC(oDI_COM, "CAMPOSSAPIC")
-                End If
-                If oDI_COM.UDO_Update = False Then
-                    Throw New Exception("(EXO) - " & oDI_COM.GetLastError)
-                End If
-            Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tablas Campos SAP IC...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-
-                oDI_COM.GetNew()
-                oDI_COM.SetValue("Code") = "CAMPOSSAPIC"
-                oDI_COM.SetValue("CodEntry") = "10"
-                oDI_COM.SetValue("Name") = "Campos de SAP IC"
-                CrearCamposCabeceraIC(oDI_COM, "CAMPOSSAPIC")
-                'CrearCamposLíneasIC(oDI_COM, "CAMPOSSAPIC")
-                If oDI_COM.UDO_Add = False Then
-                    Throw New Exception("(EXO) - Error al añadir campos SAP IC. " & oDI_COM.GetLastError)
                 End If
             End If
 #End Region
@@ -135,21 +105,21 @@ Public Class EXO_CFRP
                 sSQL = "SELECT * FROM ""@EXO_CSAPC"" WHERE ""Code""='CAMPOSSAPEXCEL' "
                 oRs.DoQuery(sSQL)
                 If oRs.RecordCount = 0 Then
-                    objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Cabecera Campos SAP EXCEL...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Cabecera Campos SAP EXCEL...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                     CrearCamposCabecera(oDI_COM, "CAMPOSSAPEXCEL")
                 End If
                 'Comprobamos que existan campos en las líneas
                 sSQL = "SELECT * FROM ""@EXO_CSAPL"" WHERE ""Code""='CAMPOSSAPEXCEL' "
                 oRs.DoQuery(sSQL)
                 If oRs.RecordCount = 0 Then
-                    objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Líneas Campos SAP EXCEL...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Líneas Campos SAP EXCEL...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                     CrearCamposLíneas(oDI_COM, "CAMPOSSAPEXCEL")
                 End If
                 If oDI_COM.UDO_Update = False Then
                     Throw New Exception("(EXO) - " & oDI_COM.GetLastError)
                 End If
             Else
-                objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tablas Campos SAP EXCEL...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tablas Campos SAP EXCEL...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
                 oDI_COM.GetNew()
                 oDI_COM.SetValue("Code") = "CAMPOSSAPEXCEL"
@@ -162,45 +132,45 @@ Public Class EXO_CFRP
                 End If
             End If
 #End Region
-#Region "CAMPOSSAPFCTXT"
-            'sSQL = "SELECT * FROM ""@EXO_CSAP"" WHERE ""Code""='CAMPOSSAPFCTXT' "
-            'oRs.DoQuery(sSQL)
-            'If oRs.RecordCount > 0 Then
-            '    Dim sCode As String = oRs.Fields.Item("Code").Value.ToString
-            '    oDI_COM.GetByKey(sCode)
-            '    'Comprobamos que existan campos en la tabla de la cabecera
-            '    sSQL = "SELECT * FROM ""@EXO_CSAPC"" WHERE ""Code""='CAMPOSSAPFCTXT' "
-            '    oRs.DoQuery(sSQL)
-            '    If oRs.RecordCount = 0 Then
-            '        objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Cabecera Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            '        CrearCamposCabecera(oDI_COM, "CAMPOSSAPFCTXT")
-            '    End If
-            '    'Comprobamos que existan campos en las líneas
-            '    sSQL = "SELECT * FROM ""@EXO_CSAPL"" WHERE ""Code""='CAMPOSSAPFCTXT' "
-            '    oRs.DoQuery(sSQL)
-            '    If oRs.RecordCount = 0 Then
-            '        objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Líneas Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
-            '        CrearCamposLíneas(oDI_COM, "CAMPOSSAPFCTXT")
-            '    End If
-            '    If oDI_COM.UDO_Update = False Then
-            '        Throw New Exception("(EXO) - " & oDI_COM.GetLastError)
-            '    End If
-            'Else
-            '    objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tablas Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+#Region "CAMPOSSAPFCSV"
+            sSQL = "SELECT * FROM ""@EXO_CSAP"" WHERE ""Code""='CAMPOSSAPFCSV' "
+            oRs.DoQuery(sSQL)
+            If oRs.RecordCount > 0 Then
+                Dim sCode As String = oRs.Fields.Item("Code").Value.ToString
+                oDI_COM.GetByKey(sCode)
+                'Comprobamos que existan campos en la tabla de la cabecera
+                sSQL = "SELECT * FROM ""@EXO_CSAPC"" WHERE ""Code""='CAMPOSSAPFCSV' "
+                oRs.DoQuery(sSQL)
+                If oRs.RecordCount = 0 Then
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Cabecera Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                    CrearCamposCabecera(oDI_COM, "CAMPOSSAPFCSV")
+                End If
+                'Comprobamos que existan campos en las líneas
+                sSQL = "SELECT * FROM ""@EXO_CSAPL"" WHERE ""Code""='CAMPOSSAPFCSV' "
+                oRs.DoQuery(sSQL)
+                If oRs.RecordCount = 0 Then
+                    objGlobal.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tabla de Líneas Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                    CrearCamposLíneas(oDI_COM, "CAMPOSSAPFCSV")
+                End If
+                If oDI_COM.UDO_Update = False Then
+                    Throw New Exception("(EXO) - " & oDI_COM.GetLastError)
+                End If
+            Else
+                objGlobal.SBOApp.StatusBar.SetText("(EXO) - Rellenando Tablas Campos SAP...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
 
-            '    oDI_COM.GetNew()
-            '    oDI_COM.SetValue("Code") = "CAMPOSSAPFCTXT"
-            '    oDI_COM.SetValue("CodEntry") = "97"
-            '    oDI_COM.SetValue("Name") = "Campos de SAP para Fac de compras TXT"
-            '    CrearCamposCabecera(oDI_COM, "CAMPOSSAPFCTXT")
-            '    CrearCamposLíneas(oDI_COM, "CAMPOSSAPFCTXT")
-            '    If oDI_COM.UDO_Add = False Then
-            '        Throw New Exception("(EXO) - Error al añadir campos SAP. " & oDI_COM.GetLastError)
-            '    End If
-            'End If
+                oDI_COM.GetNew()
+                oDI_COM.SetValue("Code") = "CAMPOSSAPFCSV"
+                oDI_COM.SetValue("CodEntry") = "97"
+                oDI_COM.SetValue("Name") = "Campos de SAP para Fac. Ventas CSV"
+                CrearCamposCabecera(oDI_COM, "CAMPOSSAPFCSV")
+                CrearCamposLíneas(oDI_COM, "CAMPOSSAPFCSV")
+                If oDI_COM.UDO_Add = False Then
+                    Throw New Exception("(EXO) - Error al añadir campos SAP. " & oDI_COM.GetLastError)
+                End If
+            End If
 #End Region
 
-            objGlobal.conexionSAP.SBOApp.StatusBar.SetText("(EXO) - Tablas Campos SAP cargadas...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
+            objGlobal.SBOApp.StatusBar.SetText("(EXO) - Tablas Campos SAP cargadas...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success)
             CargarDatos = True
 
         Catch ex As Exception
@@ -209,82 +179,6 @@ Public Class EXO_CFRP
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oDI_COM, Object))
         End Try
-    End Function
-    Private Function CrearCamposCabeceraIC(ByRef oDI_COM As EXO_DIAPI.EXO_UDOEntity, ByVal sCodigo As String)
-        Try
-            For i = 0 To 14
-                oDI_COM.GetNewChild("EXO_CSAPC")
-                Select Case i
-                    Case 0
-                        oDI_COM.SetValueChild("U_EXO_COD") = "CardCode"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Código Interlocutor"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "Y"
-                    Case 1
-                        oDI_COM.SetValueChild("U_EXO_COD") = "CardFName"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Nombre Comercial"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 2
-                        oDI_COM.SetValueChild("U_EXO_COD") = "CardName"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Nombre Interlocutor"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 3
-                        oDI_COM.SetValueChild("U_EXO_COD") = "AddID"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Código Externo Interlocutor"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 4
-                        oDI_COM.SetValueChild("U_EXO_COD") = "LicTradNum"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Núm. Identificiación Fiscal"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "Y"
-                    Case 5
-                        oDI_COM.SetValueChild("U_EXO_COD") = "Phone1"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "teléfono"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 6
-                        oDI_COM.SetValueChild("U_EXO_COD") = "Fax"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Fax"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 7
-                        oDI_COM.SetValueChild("U_EXO_COD") = "Cellular"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Móvil"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 8
-                        oDI_COM.SetValueChild("U_EXO_COD") = "Currency"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Moneda"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 9
-                        oDI_COM.SetValueChild("U_EXO_COD") = "ECVatGroup"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Impuesto"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "Y"
-                    Case 9
-                        oDI_COM.SetValueChild("U_EXO_COD") = "CardType"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Tipo IC"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 10
-                        oDI_COM.SetValueChild("U_EXO_COD") = "Country"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "País"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 11
-                        oDI_COM.SetValueChild("U_EXO_COD") = "Street"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Calle/Domicilio"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "Y"
-                    Case 12
-                        oDI_COM.SetValueChild("U_EXO_COD") = "ZipCode"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Cód. Postal"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 13
-                        oDI_COM.SetValueChild("U_EXO_COD") = "City"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Población"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                    Case 14
-                        oDI_COM.SetValueChild("U_EXO_COD") = "County"
-                        oDI_COM.SetValueChild("U_EXO_DES") = "Provincia"
-                        oDI_COM.SetValueChild("U_EXO_OBL") = "N"
-                End Select
-            Next
-        Catch ex As Exception
-            Throw ex
-        End Try
-
     End Function
 
     Private Function CrearCamposCabecera(ByRef oDI_COM As EXO_DIAPI.EXO_UDOEntity, ByVal sCodigo As String)
@@ -422,7 +316,7 @@ Public Class EXO_CFRP
     End Function
     Private Function CrearCamposLíneas(ByRef oDI_COM As EXO_DIAPI.EXO_UDOEntity, ByVal sCodigo As String)
         Try
-            For i = 0 To 11
+            For i = 0 To 15
                 oDI_COM.GetNewChild("EXO_CSAPL")
                 Select Case i
                     Case 0
@@ -475,6 +369,30 @@ Public Class EXO_CFRP
                         oDI_COM.SetValueChild("U_EXO_COD") = "EXO_REPARTO"
                         oDI_COM.SetValueChild("U_EXO_DES") = "Código Reparto"
                         oDI_COM.SetValueChild("U_EXO_OBL") = "N"
+                    Case 12
+                        If sCodigo = "CAMPOSSAPFCSV" Then
+                            oDI_COM.SetValueChild("U_EXO_COD") = "EXO_TransSantander"
+                            oDI_COM.SetValueChild("U_EXO_DES") = "Id Transacción Santander"
+                            oDI_COM.SetValueChild("U_EXO_OBL") = "Y"
+                        End If
+                    Case 13
+                        If sCodigo = "CAMPOSSAPFCSV" Then
+                            oDI_COM.SetValueChild("U_EXO_COD") = "EXO_TransfY"
+                            oDI_COM.SetValueChild("U_EXO_DES") = "Id Transacción fY"
+                            oDI_COM.SetValueChild("U_EXO_OBL") = "Y"
+                        End If
+                    Case 14
+                        If sCodigo = "CAMPOSSAPFCSV" Then
+                            oDI_COM.SetValueChild("U_EXO_COD") = "EXO_TransMM"
+                            oDI_COM.SetValueChild("U_EXO_DES") = "Id Transacción MM"
+                            oDI_COM.SetValueChild("U_EXO_OBL") = "Y"
+                        End If
+                    Case 15
+                        If sCodigo = "CAMPOSSAPFCSV" Then
+                            oDI_COM.SetValueChild("U_EXO_COD") = "EXO_NUMMOVIL"
+                            oDI_COM.SetValueChild("U_EXO_DES") = "Número de móvil"
+                            oDI_COM.SetValueChild("U_EXO_OBL") = "Y"
+                        End If
                 End Select
             Next
         Catch ex As Exception
@@ -482,7 +400,7 @@ Public Class EXO_CFRP
         End Try
 
     End Function
-    Public Overrides Function SBOApp_MenuEvent(ByRef infoEvento As EXO_Generales.EXO_MenuEvent) As Boolean
+    Public Overrides Function SBOApp_MenuEvent(infoEvento As MenuEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
 
         Try
@@ -491,23 +409,23 @@ Public Class EXO_CFRP
                 Select Case infoEvento.MenuUID
                     Case "EXO-MnCSAP"
                         'Cargamos UDO Campos SAP.
-                        objGlobal.conexionSAP.cargaFormUdoBD("EXO_CSAP")
+                        objGlobal.funcionesUI.cargaFormUdoBD("EXO_CSAP")
                 End Select
             End If
 
             Return MyBase.SBOApp_MenuEvent(infoEvento)
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
         End Try
     End Function
-    Public Overrides Function SBOApp_ItemEvent(ByRef infoEvento As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Public Overrides Function SBOApp_ItemEvent(infoEvento As ItemEvent) As Boolean
         Try
             If infoEvento.InnerEvent = False Then
                 If infoEvento.BeforeAction = False Then
@@ -553,7 +471,7 @@ Public Class EXO_CFRP
                         Case "UDO_FT_EXO_CSAP"
                             Select Case infoEvento.EventType
                                 Case SAPbouiCOM.BoEventTypes.et_FORM_VISIBLE
-                                    If EventHandler_FORM_VISIBLE(infoEvento) = False Then
+                                    If EventHandler_FORM_VISIBLE(objGlobal, infoEvento) = False Then
                                         GC.Collect()
                                         Return False
                                     End If
@@ -580,21 +498,21 @@ Public Class EXO_CFRP
 
             Return MyBase.SBOApp_ItemEvent(infoEvento)
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
             Return False
         End Try
     End Function
-    Private Function EventHandler_FORM_VISIBLE(ByRef pVal As EXO_Generales.EXO_infoItemEvent) As Boolean
+    Private Function EventHandler_FORM_VISIBLE(ByRef objGlobal As EXO_UIAPI.EXO_UIAPI, ByRef pVal As ItemEvent) As Boolean
         Dim oForm As SAPbouiCOM.Form = Nothing
-        Dim oRs As SAPbobsCOM.Recordset = CType(Me.Company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
+        Dim oRs As SAPbobsCOM.Recordset = CType(objGlobal.compañia.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset), SAPbobsCOM.Recordset)
         Dim sSQL As String = ""
         EventHandler_FORM_VISIBLE = False
 
         Try
-            oForm = SboApp.Forms.Item(pVal.FormUID)
+            oForm = objGlobal.SBOApp.Forms.Item(pVal.FormUID)
 
             If oForm.Visible = True Then
                 sSQL = "SELECT * FROM ""@EXO_CSAP"" "
@@ -602,7 +520,7 @@ Public Class EXO_CFRP
                 If oRs.RecordCount > 0 Then
                     oForm.Mode = BoFormMode.fm_OK_MODE
                     If oForm.Mode <> SAPbouiCOM.BoFormMode.fm_ADD_MODE Then
-                        objGlobal.conexionSAP.SBOApp.ActivateMenuItem("1290") ' Ir al primer registro
+                        objGlobal.SBOApp.ActivateMenuItem("1290") ' Ir al primer registro
                     End If
                 Else
                     oForm.Mode = BoFormMode.fm_ADD_MODE
@@ -612,9 +530,9 @@ Public Class EXO_CFRP
             EventHandler_FORM_VISIBLE = True
 
         Catch exCOM As System.Runtime.InteropServices.COMException
-            objGlobal.conexionSAP.Mostrar_Error(exCOM, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(exCOM, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Catch ex As Exception
-            objGlobal.conexionSAP.Mostrar_Error(ex, EXO_Generales.EXO_SAP.EXO_TipoMensaje.Excepcion)
+            objGlobal.Mostrar_Error(ex, EXO_UIAPI.EXO_UIAPI.EXO_TipoMensaje.Excepcion)
         Finally
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oForm, Object))
             EXO_CleanCOM.CLiberaCOM.liberaCOM(CType(oRs, Object))
