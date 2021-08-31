@@ -1716,14 +1716,16 @@ Public Class EXO_GLOBALES
                                     oSboApp.MessageBox(sMensaje)
                                     Exit Sub
                                 Else
+                                    Dim dFecha As Date = CDate(sFContable)
                                     'Ponemos formato para SQL
-                                    sFContable = Year(sFContable).ToString("0000") & "-" & Month(sFContable).ToString("00") & "-" & Day(sFContable).ToString("00")
+                                    sFContable = Year(dFecha).ToString("0000") & "-" & Month(dFecha).ToString("00") & "-" & Day(dFecha).ToString("00")
                                     If sFDocumento = "" Then
                                         sMensaje &= "No se ha indicado una fecha de documento. Se actualizará con la fecha contable."
                                         oSboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                         sFDocumento = sFContable
                                     Else
-                                        sFDocumento = Year(sFDocumento).ToString("0000") & "-" & Month(sFDocumento).ToString("00") & "-" & Day(sFDocumento).ToString("00")
+                                        dFecha = CDate(sFDocumento)
+                                        sFDocumento = Year(dFecha).ToString("0000") & "-" & Month(dFecha).ToString("00") & "-" & Day(dFecha).ToString("00")
                                     End If
                                 End If
                                 If sTipoDto = "" Then : sTipoDto = "%" : End If ' Se toma si no tiene valor que el dto va en Porcentaje
