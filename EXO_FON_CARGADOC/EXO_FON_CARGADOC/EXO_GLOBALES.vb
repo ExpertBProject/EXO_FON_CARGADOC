@@ -1697,8 +1697,8 @@ Public Class EXO_GLOBALES
                                 'Comprobamos que se haya introducido manual o con una serie
                                 If sDocNum = "" Then
                                     If sSerie = "" Then
-                                        sMensaje &= "No se ha indicado ni Nº de documento ni serie. Se indica el Nº de serie por defecto."
-                                        oSboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                                        'sMensaje &= "No se ha indicado ni Nº de documento ni serie. Se indica el Nº de serie por defecto."
+                                        'oSboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                         sManual = "N"
                                         'Nº de serie
                                         'Cogemos la serie por defecto
@@ -1720,8 +1720,8 @@ Public Class EXO_GLOBALES
                                     'Ponemos formato para SQL
                                     sFContable = Year(dFecha).ToString("0000") & "-" & Month(dFecha).ToString("00") & "-" & Day(dFecha).ToString("00")
                                     If sFDocumento = "" Then
-                                        sMensaje &= "No se ha indicado una fecha de documento. Se actualizará con la fecha contable."
-                                        oSboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
+                                        'sMensaje &= "No se ha indicado una fecha de documento. Se actualizará con la fecha contable."
+                                        'oSboApp.StatusBar.SetText("(EXO) - " & sMensaje, SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning)
                                         sFDocumento = sFContable
                                     Else
                                         dFecha = CDate(sFDocumento)
